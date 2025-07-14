@@ -65,16 +65,9 @@ jobs:
                 
                 Write-Output "Bun installed to $targetBun"
                 
-                # バージョン確認（エラーを無視）
-                try {
-                  $bunVersion = & $targetBun --version 2>$null
-                  Write-Output "Bun version: $bunVersion"
-                } catch {
-                  Write-Output "Bun installed but version check failed: $_"
-                }
-                
-                # 環境変数として保存
+                # 環境変数として保存（バージョン確認をスキップ）
                 Write-Output "BUN_PATH=$targetBun" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+                Write-Output "Bun installation completed successfully"
                 
               } else {
                 throw "Bun executable not found after extraction in $tempExtractDir"
