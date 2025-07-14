@@ -91,6 +91,16 @@ jobs:
           }
         shell: powershell
         
+      - name: Verify Bun installation
+        run: |
+          if ($env:BUN_PATH -and (Test-Path $env:BUN_PATH)) {
+            Write-Output "✓ Bun is available at: $env:BUN_PATH"
+            Write-Output "File size: $((Get-Item $env:BUN_PATH).Length) bytes"
+          } else {
+            Write-Output "⚠️ Bun not available, will use npm"
+          }
+        shell: powershell
+        
       - name: Install dependencies
         run: |
           if ($env:BUN_PATH -and (Test-Path $env:BUN_PATH)) {
