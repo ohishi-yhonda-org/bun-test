@@ -105,7 +105,17 @@ jobs:
         run: |
           if ($env:BUN_PATH -and (Test-Path $env:BUN_PATH)) {
             Write-Output "Installing dependencies with Bun at: $env:BUN_PATH"
-            & $env:BUN_PATH install
+            try {
+              & $env:BUN_PATH install
+              if ($LASTEXITCODE -ne 0) {
+                throw "Bun install failed with exit code $LASTEXITCODE"
+              }
+              Write-Output "✓ Dependencies installed successfully with Bun"
+            } catch {
+              Write-Output "❌ Bun install failed: $_"
+              Write-Output "Falling back to npm..."
+              npm install
+            }
           } else {
             Write-Output "Installing dependencies with npm..."
             npm install
@@ -116,7 +126,17 @@ jobs:
         run: |
           if ($env:BUN_PATH -and (Test-Path $env:BUN_PATH)) {
             Write-Output "Generating Prisma client with Bun at: $env:BUN_PATH"
-            & $env:BUN_PATH run prisma generate
+            try {
+              & $env:BUN_PATH run prisma generate
+              if ($LASTEXITCODE -ne 0) {
+                throw "Bun prisma generate failed with exit code $LASTEXITCODE"
+              }
+              Write-Output "✓ Prisma client generated successfully with Bun"
+            } catch {
+              Write-Output "❌ Bun prisma generate failed: $_"
+              Write-Output "Falling back to npm..."
+              npx prisma generate
+            }
           } else {
             Write-Output "Generating Prisma client with npm..."
             npx prisma generate
@@ -129,7 +149,17 @@ jobs:
           if ($packageJson.scripts.build) {
             if ($env:BUN_PATH -and (Test-Path $env:BUN_PATH)) {
               Write-Output "Building with Bun at: $env:BUN_PATH"
-              & $env:BUN_PATH run build
+              try {
+                & $env:BUN_PATH run build
+                if ($LASTEXITCODE -ne 0) {
+                  throw "Bun build failed with exit code $LASTEXITCODE"
+                }
+                Write-Output "✓ Build completed successfully with Bun"
+              } catch {
+                Write-Output "❌ Bun build failed: $_"
+                Write-Output "Falling back to npm..."
+                npm run build
+              }
             } else {
               Write-Output "Building with npm..."
               npm run build
