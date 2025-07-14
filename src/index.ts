@@ -9,8 +9,7 @@ import { createMiddleware } from 'hono/factory'
 // index.ts
 import { PrismaMssql } from '@prisma/adapter-mssql';
 import * as mssql from 'mssql';
-import untenApi from './unten';
-import { BaseUntenNippouMeisaiSchema } from './unten/list';
+import { untenApi } from './unten';
 
 export type ENV = {
   Bindings: {
@@ -30,20 +29,17 @@ const app = new OpenAPIHono<ENV>()
 
 // スキーマを明示的に参照してOpenAPIのcomponentsに含める
 // この行は実行されないが、TypeScriptの型チェック時にスキーマが認識される
-if (false) BaseUntenNippouMeisaiSchema;
 
 
 
-app.route('/unten', untenApi);
-
-app.doc('/specification', {
-  openapi: '3.0.0',
-  info: {
-    version: '1.0.0',
-    title: 'My API',
-  },
-})
-app.get('/doc', swaggerUI({ url: '/specification' }))
+app.route('/unten', untenApi)
+  .doc31('/specification', {
+    openapi: '3.0.0',
+    info: {
+      version: '1.0.0',
+      title: 'My API',
+    },
+  }).get('/doc', swaggerUI({ url: '/specification' }))
 
 
 export default app
