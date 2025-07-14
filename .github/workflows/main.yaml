@@ -23,8 +23,15 @@ jobs:
         run: Get-ChildItem
         shell: powershell
         
-      - name: Install dependencies
-        run: npm install
+      - name: Install Bun
+        run: |
+          $bunPath = "C:\Users\Administrator\AppData\Roaming\bun\bin"
+          if (-not (Test-Path $bunPath)) {
+            Write-Output "Bun not found, installing..."
+            iwr https://bun.sh/install | iex
+          } else {
+            Write-Output "Bun is already installed."
+          }
         shell: powershell
         
       - name: generate Prisma client
