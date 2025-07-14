@@ -29,37 +29,77 @@ jobs:
           if (-not (Test-Path $bunPath)) {
             Write-Output "Bun not found, installing..."
             try {
-              # UseBasicParsingを使用してIEエンジンの問題を回避
-              $installScript = Invoke-WebRequest -Uri "https://bun.sh/install" -UseBasicParsing
-              Invoke-Expression $installScript.Content
+              # Windows用のBunインストール（PowerShellで直接ダウンロード）
+              $bunInstallDir = "$env:USERPROFILE\.bun"
+              $bunBinDir = "$bunInstallDir\bin"
               
-              # インストール後にPATHを更新
-              $env:PATH = "$bunPath;$env:PATH"
-              Write-Output "Bun installed successfully"
+              # ディレクトリ作成
+              New-Item -ItemType Directory -Force -Path $bunBinDir | Out-Null
               
-              # バージョン確認
-              & "$bunPath\bun.exe" --version
+              # Bunの最新バージョンをダウンロード
+              $bunUrl = "https://github.com/oven-sh/bun/releases/latest/download/bun-windows-x64.zip"
+              $zipPath = "$env:TEMP\bun.zip"
+              
+              Write-Output "Downloading Bun from $bunUrl"
+              Invoke-WebRequest -Uri $bunUrl -OutFile $zipPath -UseBasicParsing
+              
+              # ZIPを展開
+              Write-Output "Extracting Bun..."
+              Expand-Archive -Path $zipPath -DestinationPath $bunInstallDir -Force
+              
+              # 実行ファイルを正しい場所に移動
+              $extractedFiles = Get-ChildItem -Path $bunInstallDir -Name "bun*.exe" -Recurse
+              if ($extractedFiles) {
+                $sourceBun = "$bunInstallDir\$($extractedFiles[0])"
+                $targetBun = "$bunBinDir\bun.exe"
+                Move-Item -Path $sourceBun -Destination $targetBun -Force
+                Write-Output "Bun installed to $targetBun"
+                
+                # PATHに追加
+                $env:PATH = "$bunBinDir;$env:PATH"
+                
+                # バージョン確認
+                & $targetBun --version
+              } else {
+                throw "Bun executable not found after extraction"
+              }
+              
+              # 一時ファイル削除
+              Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
               
             } catch {
               Write-Output "Failed to install Bun: $_"
-              Write-Output "Falling back to npm for dependencies..."
-              exit 0
+              Write-Output "Continuing with npm..."
             }
           } else {
             Write-Output "Bun is already installed."
             # PATHに追加
             $env:PATH = "$bunPath;$env:PATH"
-            & "$bunPath\bun.exe" --version
+            if (Test-Path "$bunPath\bun.exe") {
+              & "$bunPath\bun.exe" --version
+            }
           }
         shell: powershell
         
       - name: Install dependencies
         run: |
-          $bunPath = "C:\Users\Administrator\AppData\Roaming\bun\bin\bun.exe"
-          if (Test-Path $bunPath) {
-            Write-Output "Installing dependencies with Bun..."
-            & $bunPath install
-          } else {
+          # 複数の場所でBunを探す
+          $bunPaths = @(
+            "C:\Users\Administrator\AppData\Roaming\bun\bin\bun.exe",
+            "$env:USERPROFILE\.bun\bin\bun.exe"
+          )
+          
+          $bunFound = $false
+          foreach ($bunPath in $bunPaths) {
+            if (Test-Path $bunPath) {
+              Write-Output "Installing dependencies with Bun at: $bunPath"
+              & $bunPath install
+              $bunFound = $true
+              break
+            }
+          }
+          
+          if (-not $bunFound) {
             Write-Output "Installing dependencies with npm..."
             npm install
           }
@@ -67,11 +107,23 @@ jobs:
         
       - name: generate Prisma client
         run: |
-          $bunPath = "C:\Users\Administrator\AppData\Roaming\bun\bin\bun.exe"
-          if (Test-Path $bunPath) {
-            Write-Output "Generating Prisma client with Bun..."
-            & $bunPath run prisma generate
-          } else {
+          # 複数の場所でBunを探す
+          $bunPaths = @(
+            "C:\Users\Administrator\AppData\Roaming\bun\bin\bun.exe",
+            "$env:USERPROFILE\.bun\bin\bun.exe"
+          )
+          
+          $bunFound = $false
+          foreach ($bunPath in $bunPaths) {
+            if (Test-Path $bunPath) {
+              Write-Output "Generating Prisma client with Bun at: $bunPath"
+              & $bunPath run prisma generate
+              $bunFound = $true
+              break
+            }
+          }
+          
+          if (-not $bunFound) {
             Write-Output "Generating Prisma client with npm..."
             npx prisma generate
           }
