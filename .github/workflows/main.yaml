@@ -32,12 +32,35 @@ jobs:
       - name: Verify Bun installation
         run: |
           try {
-            $bunVersion = bun --version
-            Write-Output "✓ Bun is available, version: $bunVersion"
-            Write-Output "BUN_AVAILABLE=true" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            # Bunが利用可能かテスト
+            $bunVersion = bun --version 2>$null
+            if ($LASTEXITCODE -eq 0) {
+              Write-Output "✓ Bun is available, version: $bunVersion"
+              Write-Output "BUN_AVAILABLE=true" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            } else {
+              throw "Bun command failed"
+            }
           } catch {
-            Write-Output "⚠️ Bun not available, will use npm"
+            Write-Output "⚠️ Bun not available or failed to execute: $_"
+            Write-Output "This may be due to permission issues with symlink creation on self-hosted runner"
+            Write-Output "Will use npm for all operations"
             Write-Output "BUN_AVAILABLE=false" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          }
+        shell: powershell
+        
+      - name: Clean previous installations (if needed)
+        run: |
+          if (Test-Path "node_modules") {
+            Write-Output "Removing existing node_modules..."
+            Remove-Item "node_modules" -Recurse -Force -ErrorAction SilentlyContinue
+          }
+          if (Test-Path "bun.lockb") {
+            Write-Output "Removing existing bun.lockb..."
+            Remove-Item "bun.lockb" -Force -ErrorAction SilentlyContinue
+          }
+          if (Test-Path "package-lock.json") {
+            Write-Output "Removing existing package-lock.json..."
+            Remove-Item "package-lock.json" -Force -ErrorAction SilentlyContinue
           }
         shell: powershell
         
@@ -54,11 +77,12 @@ jobs:
             } catch {
               Write-Output "❌ Bun install failed: $_"
               Write-Output "Falling back to npm..."
-              npm install
+              npm install --verbose
             }
           } else {
             Write-Output "Installing dependencies with npm..."
-            npm install
+            Write-Output "Using npm with --legacy-peer-deps to resolve dependency conflicts..."
+            npm install --legacy-peer-deps --verbose
           }
         shell: powershell
         
