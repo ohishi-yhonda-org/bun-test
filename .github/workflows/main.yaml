@@ -39,14 +39,50 @@ jobs:
           }
         shell: powershell
           
-      - name: Check Bun version (with full path)
+      - name: Find and Check Bun installation
         run: |
-          $bunExe = "C:\Users\Administrator\AppData\Roaming\bun\bin\bun.exe"
-          if (Test-Path $bunExe) {
-            & $bunExe --version
-          } else {
-            Write-Output "Bun executable not found at $bunExe"
-            exit 1
+          Write-Output "Searching for Bun installation..."
+          
+          # 複数の可能な場所を検索
+          $possiblePaths = @(
+            "C:\Users\Administrator\AppData\Roaming\bun\bin\bun.exe",
+            "C:\Users\Administrator\.bun\bin\bun.exe",
+            "C:\bun\bin\bun.exe",
+            "C:\Program Files\bun\bin\bun.exe",
+            "${env:USERPROFILE}\AppData\Roaming\bun\bin\bun.exe",
+            "${env:USERPROFILE}\.bun\bin\bun.exe"
+          )
+          
+          $bunFound = $false
+          foreach ($path in $possiblePaths) {
+            Write-Output "Checking: $path"
+            if (Test-Path $path) {
+              Write-Output "✓ Found Bun at: $path"
+              $global:BUN_PATH = $path
+              & $path --version
+              $bunFound = $true
+              # 環境変数として設定
+              Write-Output "BUN_EXECUTABLE=$path" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+              break
+            }
+          }
+          
+          if (-not $bunFound) {
+            Write-Output "❌ Bun not found in any expected location"
+            Write-Output "Checking if bun is in system PATH..."
+            try {
+              $bunInPath = Get-Command bun -ErrorAction SilentlyContinue
+              if ($bunInPath) {
+                Write-Output "✓ Found Bun in PATH: $($bunInPath.Source)"
+                Write-Output "BUN_EXECUTABLE=bun" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+              } else {
+                Write-Output "❌ Bun not found in PATH either"
+                exit 1
+              }
+            } catch {
+              Write-Output "❌ Error checking PATH: $_"
+              exit 1
+            }
           }
         shell: powershell
         
@@ -56,18 +92,15 @@ jobs:
         
       - name: Install dependencies
         run: |
-          $bunExe = "C:\Users\Administrator\AppData\Roaming\bun\bin\bun.exe"
-          & $bunExe install
+          & $env:BUN_EXECUTABLE install
         shell: powershell
         
       - name: generate Prisma client
         run: |
-          $bunExe = "C:\Users\Administrator\AppData\Roaming\bun\bin\bun.exe"
-          & $bunExe run prisma generate
+          & $env:BUN_EXECUTABLE run prisma generate
         shell: powershell
         
       - name: Build project
         run: |
-          $bunExe = "C:\Users\Administrator\AppData\Roaming\bun\bin\bun.exe"
-          & $bunExe run build
+          & $env:BUN_EXECUTABLE run build
         shell: powershell 
