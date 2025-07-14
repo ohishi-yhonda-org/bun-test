@@ -1,27 +1,40 @@
 import { createRoute, RouteHandler, z } from "@hono/zod-openapi";
 import { ENV } from "..";
 import { sqlSvMiddleware } from "../middleware/sqlsv";
-import { checkPrismaClient, createPrismaNotFoundResponse } from "../utils/prisma";
+import { checkPrismaClient, createPrismaNotFoundResponse, buildDateRangeConditions } from "../utils/prisma";
 import {
     UntenNippouMeisaiListResponseSchema, ErrorResponseSchema,
-    BaseUntenNippouMeisaiSchema
+    BaseUntenNippouMeisaiSchema, UntenNippouMeisaiSchemaSearchSchema
 } from "../openApi/schema";
-// 基本のZodスキーマ（UntenNippouMeisaiSchemaをベースにOpenAPI定義を追加）
-
-
-// レスポンススキーマの定義
-
+import type { Prisma } from "../../prisma/src/generated/prisma";
 
 export const untenlistRoute = createRoute({
-    method: "get",
+    method: "post",
     path: "/",
     middleware: [sqlSvMiddleware],
+    request: {
+        body: {
+            content: {
+                "application/json": {
+                    schema: UntenNippouMeisaiSchemaSearchSchema,
+                },
+            },
+        },
+    },
     responses: {
         200: {
             description: "運転日報明細の一覧",
             content: {
                 "application/json": {
                     schema: UntenNippouMeisaiListResponseSchema,
+                },
+            },
+        },
+        400: {
+            description: "Invalid query parameters",
+            content: {
+                "application/json": {
+                    schema: ErrorResponseSchema,
                 },
             },
         },
@@ -38,11 +51,58 @@ export const untenlistRoute = createRoute({
 })
 
 export const untenlistHandler: RouteHandler<typeof untenlistRoute, ENV> = async (c) => {
+    const { fromTsumikomiDate, toTsumikomiDate, fromOroshiDate, toOroshiDate, jyuchuBumon, kadouBumon, fromUnkouDate, toUnkouDate, sharyoC, sharyoH } = c.req.valid("json");
+
+    // JSONボディの検証
+    if (!c.req.valid("json")) {
+        console.log('Invalid JSON body');
+        return c.json({ error: "Invalid JSON body" }, 400);
+    }
+
+    console.log('Valid JSON body:', c.req.valid("json"));
     const prisma = checkPrismaClient(c);
     if (!prisma) return createPrismaNotFoundResponse(c);
     try {
         await prisma.$connect();
-        const tables = await prisma.untenNippouMeisai.findMany({ "take": 10, where: { untenDate: { gte: new Date() } } });
+
+        // 動的にwhere条件を構築
+        const whereConditions: Prisma.UntenNippouMeisaiWhereInput = {};
+
+        // 積み込み日の条件を構築
+        const tsumikomiDateConditions = buildDateRangeConditions(fromTsumikomiDate, toTsumikomiDate);
+        if (tsumikomiDateConditions) whereConditions.tsumikomiDate = tsumikomiDateConditions;
+
+
+        // 運行日の条件を構築
+        const unkouDateConditions = buildDateRangeConditions(fromUnkouDate, toUnkouDate);
+        if (unkouDateConditions) whereConditions.unkouDate = unkouDateConditions;
+
+
+        // 卸日の条件を構築
+        const oroshiDateConditions = buildDateRangeConditions(fromOroshiDate, toOroshiDate);
+        if (oroshiDateConditions) whereConditions.oroshiDate = oroshiDateConditions;
+
+
+        if (jyuchuBumon != null && jyuchuBumon !== undefined && Array.isArray(jyuchuBumon) && jyuchuBumon.length > 0) {
+            whereConditions.juchuBumon = { in: jyuchuBumon };
+        }
+
+        if (kadouBumon != null && kadouBumon !== undefined && Array.isArray(kadouBumon) && kadouBumon.length > 0) {
+            whereConditions.kadouBumon = { in: kadouBumon };
+        }
+
+        if (sharyoC != null && sharyoC !== undefined) {
+            whereConditions.sharyoC = { equals: sharyoC };
+        }
+        if (sharyoH != null && sharyoH !== undefined) {
+            whereConditions.sharyoH = { equals: sharyoH };
+        }
+
+
+
+        const tables = await prisma.untenNippouMeisai.findMany({
+            where: whereConditions
+        });
         console.log('\n📊 データベースのテーブル一覧:');
         if (tables.length === 0) {
             console.log('データが見つかりませんでした。');
