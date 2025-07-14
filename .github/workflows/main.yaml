@@ -13,10 +13,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: list files
-        run: dir
-        shell: pwsh
+        run: Get-ChildItem
+        shell: powershell
       - name: Install dependencies
         run: bun install
-        shell: pwsh
+        shell: powershell
       - name: generate Prisma client
-        run: npx prisma generate 
+        run: npx prisma generate
+        shell: powershell 
