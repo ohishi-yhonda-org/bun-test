@@ -85,12 +85,7 @@ jobs:
           } else {
             Write-Output "Bun is already installed."
             if (Test-Path "$bunPath\bun.exe") {
-              try {
-                $bunVersion = & "$bunPath\bun.exe" --version 2>$null
-                Write-Output "Existing Bun version: $bunVersion"
-              } catch {
-                Write-Output "Existing Bun found but version check failed: $_"
-              }
+              Write-Output "Using existing Bun installation"
               Write-Output "BUN_PATH=$bunPath\bun.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
             }
           }
