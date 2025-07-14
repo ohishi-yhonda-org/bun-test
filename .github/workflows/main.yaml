@@ -28,21 +28,67 @@ jobs:
           $bunPath = "C:\Users\Administrator\AppData\Roaming\bun\bin"
           if (-not (Test-Path $bunPath)) {
             Write-Output "Bun not found, installing..."
-            iwr https://bun.sh/install | iex
+            try {
+              # UseBasicParsingを使用してIEエンジンの問題を回避
+              $installScript = Invoke-WebRequest -Uri "https://bun.sh/install" -UseBasicParsing
+              Invoke-Expression $installScript.Content
+              
+              # インストール後にPATHを更新
+              $env:PATH = "$bunPath;$env:PATH"
+              Write-Output "Bun installed successfully"
+              
+              # バージョン確認
+              & "$bunPath\bun.exe" --version
+              
+            } catch {
+              Write-Output "Failed to install Bun: $_"
+              Write-Output "Falling back to npm for dependencies..."
+              exit 0
+            }
           } else {
             Write-Output "Bun is already installed."
+            # PATHに追加
+            $env:PATH = "$bunPath;$env:PATH"
+            & "$bunPath\bun.exe" --version
+          }
+        shell: powershell
+        
+      - name: Install dependencies
+        run: |
+          $bunPath = "C:\Users\Administrator\AppData\Roaming\bun\bin\bun.exe"
+          if (Test-Path $bunPath) {
+            Write-Output "Installing dependencies with Bun..."
+            & $bunPath install
+          } else {
+            Write-Output "Installing dependencies with npm..."
+            npm install
           }
         shell: powershell
         
       - name: generate Prisma client
-        run: npx prisma generate
+        run: |
+          $bunPath = "C:\Users\Administrator\AppData\Roaming\bun\bin\bun.exe"
+          if (Test-Path $bunPath) {
+            Write-Output "Generating Prisma client with Bun..."
+            & $bunPath run prisma generate
+          } else {
+            Write-Output "Generating Prisma client with npm..."
+            npx prisma generate
+          }
         shell: powershell
         
       - name: Build project (if available)
         run: |
           $packageJson = Get-Content "package.json" | ConvertFrom-Json
           if ($packageJson.scripts.build) {
-            npm run build
+            $bunPath = "C:\Users\Administrator\AppData\Roaming\bun\bin\bun.exe"
+            if (Test-Path $bunPath) {
+              Write-Output "Building with Bun..."
+              & $bunPath run build
+            } else {
+              Write-Output "Building with npm..."
+              npm run build
+            }
           } else {
             Write-Output "No build script found, skipping build"
           }
