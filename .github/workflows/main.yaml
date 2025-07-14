@@ -56,14 +56,19 @@ jobs:
           $bunFound = $false
           foreach ($path in $possiblePaths) {
             Write-Output "Checking: $path"
-            if (Test-Path $path) {
-              Write-Output "✓ Found Bun at: $path"
-              $global:BUN_PATH = $path
-              & $path --version
-              $bunFound = $true
-              # 環境変数として設定
-              Write-Output "BUN_EXECUTABLE=$path" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-              break
+            try {
+              if (Test-Path $path -ErrorAction SilentlyContinue) {
+                Write-Output "✓ Found Bun at: $path"
+                $global:BUN_PATH = $path
+                & $path --version
+                $bunFound = $true
+                # 環境変数として設定
+                Write-Output "BUN_EXECUTABLE=$path" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+                break
+              }
+            } catch {
+              Write-Output "⚠️  Access denied or error checking: $path"
+              continue
             }
           }
           
@@ -75,8 +80,24 @@ jobs:
               if ($bunInPath) {
                 Write-Output "✓ Found Bun in PATH: $($bunInPath.Source)"
                 Write-Output "BUN_EXECUTABLE=bun" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+                $bunFound = $true
               } else {
                 Write-Output "❌ Bun not found in PATH either"
+                
+                # 最後の手段: どこでもbunを検索
+                Write-Output "Performing system-wide search for bun.exe..."
+                try {
+                  $bunFiles = Get-ChildItem -Path "C:\" -Name "bun.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 3
+                  if ($bunFiles) {
+                    Write-Output "Found bun.exe files at:"
+                    foreach ($file in $bunFiles) {
+                      Write-Output "  - C:\$file"
+                    }
+                  }
+                } catch {
+                  Write-Output "Search failed: $_"
+                }
+                
                 exit 1
               }
             } catch {
