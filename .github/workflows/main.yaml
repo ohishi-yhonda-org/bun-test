@@ -13,98 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Add Bun to PATH
+      - name: Verify Node.js and npm
         run: |
-          $bunPath = "C:\Users\Administrator\AppData\Roaming\bun\bin"
-          if (Test-Path $bunPath) {
-            Write-Output "Adding $bunPath to PATH"
-            Write-Output "$bunPath" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-            Write-Output "GITHUB_PATH content:"
-            Get-Content $env:GITHUB_PATH
-          } else {
-            Write-Output "Bun path not found at $bunPath"
-            # 他の一般的なBunインストール場所もチェック
-            $alternatePaths = @(
-              "C:\bun\bin",
-              "C:\Program Files\bun\bin",
-              "${env:USERPROFILE}\.bun\bin"
-            )
-            foreach ($path in $alternatePaths) {
-              if (Test-Path $path) {
-                Write-Output "Adding $path to PATH"
-                Write-Output "$path" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-                break
-              }
-            }
-          }
-        shell: powershell
-          
-      - name: Find and Check Bun installation
-        run: |
-          Write-Output "Searching for Bun installation..."
-          
-          # 複数の可能な場所を検索
-          $possiblePaths = @(
-            "C:\Users\Administrator\AppData\Roaming\bun\bin\bun.exe",
-            "C:\Users\Administrator\.bun\bin\bun.exe",
-            "C:\bun\bin\bun.exe",
-            "C:\Program Files\bun\bin\bun.exe",
-            "${env:USERPROFILE}\AppData\Roaming\bun\bin\bun.exe",
-            "${env:USERPROFILE}\.bun\bin\bun.exe"
-          )
-          
-          $bunFound = $false
-          foreach ($path in $possiblePaths) {
-            Write-Output "Checking: $path"
-            try {
-              if (Test-Path $path -ErrorAction SilentlyContinue) {
-                Write-Output "✓ Found Bun at: $path"
-                $global:BUN_PATH = $path
-                & $path --version
-                $bunFound = $true
-                # 環境変数として設定
-                Write-Output "BUN_EXECUTABLE=$path" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-                break
-              }
-            } catch {
-              Write-Output "⚠️  Access denied or error checking: $path"
-              continue
-            }
-          }
-          
-          if (-not $bunFound) {
-            Write-Output "❌ Bun not found in any expected location"
-            Write-Output "Checking if bun is in system PATH..."
-            try {
-              $bunInPath = Get-Command bun -ErrorAction SilentlyContinue
-              if ($bunInPath) {
-                Write-Output "✓ Found Bun in PATH: $($bunInPath.Source)"
-                Write-Output "BUN_EXECUTABLE=bun" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-                $bunFound = $true
-              } else {
-                Write-Output "❌ Bun not found in PATH either"
-                
-                # 最後の手段: どこでもbunを検索
-                Write-Output "Performing system-wide search for bun.exe..."
-                try {
-                  $bunFiles = Get-ChildItem -Path "C:\" -Name "bun.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 3
-                  if ($bunFiles) {
-                    Write-Output "Found bun.exe files at:"
-                    foreach ($file in $bunFiles) {
-                      Write-Output "  - C:\$file"
-                    }
-                  }
-                } catch {
-                  Write-Output "Search failed: $_"
-                }
-                
-                exit 1
-              }
-            } catch {
-              Write-Output "❌ Error checking PATH: $_"
-              exit 1
-            }
-          }
+          Write-Output "Node.js version: $(node --version)"
+          Write-Output "npm version: $(npm --version)"
         shell: powershell
         
       - name: list files
@@ -112,16 +24,19 @@ jobs:
         shell: powershell
         
       - name: Install dependencies
-        run: |
-          & $env:BUN_EXECUTABLE install
+        run: npm install
         shell: powershell
         
       - name: generate Prisma client
-        run: |
-          & $env:BUN_EXECUTABLE run prisma generate
+        run: npx prisma generate
         shell: powershell
         
-      - name: Build project
+      - name: Build project (if available)
         run: |
-          & $env:BUN_EXECUTABLE run build
+          $packageJson = Get-Content "package.json" | ConvertFrom-Json
+          if ($packageJson.scripts.build) {
+            npm run build
+          } else {
+            Write-Output "No build script found, skipping build"
+          }
         shell: powershell 
