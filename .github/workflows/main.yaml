@@ -176,3 +176,20 @@ jobs:
             Write-Output "No build script found, skipping build"
           }
         shell: powershell 
+
+      #pm2がインストールされているか確認
+      - name: Verify pm2 installation
+        run: |
+          try {
+            $pm2Version = pm2 --version 2>$null
+            if ($LASTEXITCODE -eq 0) {
+              Write-Output "✓ pm2 is available, version: $pm2Version"
+            } else {
+              throw "pm2 command failed"
+            }
+          } catch {
+            Write-Output "⚠️ pm2 not available or failed to execute: $_"
+          }
+        shell: powershell
+        
+
