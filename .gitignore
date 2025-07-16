@@ -1,5 +1,10 @@
 # deps
 node_modules/
-/prisma/
+
+# Prisma generated files
+/prisma/src/
+/prisma/generated/
 /src/generated/prisma
+
+# Bun config
 bunconfig.toml

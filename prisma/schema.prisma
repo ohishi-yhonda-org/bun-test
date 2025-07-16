@@ -1,0 +1,52 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+  output          = "./src/generated/prisma" // カスタムの場所（以前のやり取りで出てきた可能性）
+
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+generator zod {
+  provider          = "zod-prisma-types"
+  useMultipleFiles  = true  // 各モデルを別ファイルに生成
+  writeBarrelFiles  = false // インデックスファイルを生成しない
+  useTypeAssertions = true  // 型アサーション使用
+}
+
+model UntenNippouMeisai { // コード内で使うモデル名（キャメルケース推奨）
+  // ... フィールドの定義 ...
+  unkouDate DateTime @map("運行年月日") // Prismaのフィールド名はキャメルケースで、SQL Serverのカラム名は日本語
+  sharyoC String @map("車輌C") // 車輌C
+  sharyoH String @map("車輌H") // 車輌H
+  untenshuC String @map("運転手C") // 運転手
+  yoshaC String @map("傭車先C") // 傭車先
+  yoshaH String @map("傭車先H") // 傭車先H
+  nyuryokuC String @map("入力担当C") // 入力担当
+  kanriDate DateTime @map("管理年月日") // 管理年月日
+  kanriC Int @map("管理C") // 管理C
+  tsumikomiDate DateTime @map("積込年月日") // 積込年月日
+  oroshiDate DateTime @map("納入年月日") // 納入年月日
+  firstInputTime DateTime @map("初回年月日") // 納入年月日
+  updateTime DateTime @map("最終更新") // 納入年月日
+  juchuBumon String @map("受注部門") // 受注部門
+  kadouBumon String @map("稼動部門") // 稼動部門
+  tokuiC String @map("得意先C") // 得意先C
+  tokuiH String @map("得意先H") // 得意先H
+  hatsuchiN String @map("発地N") // 発地N
+  chakuchiN String @map("着地N") // 着地N
+  seikyuK Int @map("請求K") // 請求K
+  @@id([kanriDate, kanriC])
+
+  // データベースのテーブル名が日本語の「運転日報明細」であることをPrismaに伝える
+  @@map("運転日報明細")
+}
