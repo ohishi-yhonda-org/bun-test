@@ -54,6 +54,14 @@ app.get('/', (c) => {
 const port = process.env.PORT || 3000
 console.log(`Starting server on port ${port}`)
 
+// Bunサーバーを起動
+const server = Bun.serve({
+  port: Number(port),
+  fetch: app.fetch,
+})
+
+console.log(`Server is running on http://localhost:${server.port}`)
+
 export default {
   port: port,
   fetch: app.fetch,
