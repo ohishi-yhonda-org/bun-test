@@ -223,17 +223,29 @@ jobs:
             Write-Output "Deploying application with pm2..."
             Write-Output "Using absolute path: $absoluteIndexPath"
             
-            # 既存のプロセスが存在するかチェック（より安全な方法）
+            # 既存のプロセスが存在するかチェック（複数の方法で確認）
             $processExists = $false
             try {
+              # 方法1: pm2 jlist でチェック
               $processList = pm2 jlist | ConvertFrom-Json
               $existingProcess = $processList | Where-Object { $_.name -eq "bun-test-app" }
               if ($existingProcess) {
                 $processExists = $true
-                Write-Output "Existing process found. Current status: $($existingProcess.pm2_env.status)"
+                Write-Output "Existing process found via jlist. Current status: $($existingProcess.pm2_env.status)"
               }
             } catch {
-              Write-Output "Could not check existing processes, assuming no existing process"
+              Write-Output "Could not check processes via jlist, trying alternative method..."
+              
+              # 方法2: pm2 show でチェック
+              try {
+                pm2 show bun-test-app 2>$null
+                if ($LASTEXITCODE -eq 0) {
+                  $processExists = $true
+                  Write-Output "Existing process found via show command"
+                }
+              } catch {
+                Write-Output "No existing process found via show command"
+              }
             }
             
             if ($processExists) {
@@ -254,7 +266,8 @@ jobs:
               }
             } else {
               Write-Output "No existing process found. Starting new process..."
-              pm2 start $absoluteIndexPath --name "bun-test-app"
+              # -f オプションを追加して強制実行
+              pm2 start $absoluteIndexPath --name "bun-test-app" -f
             }
             
             # 最終状態確認
