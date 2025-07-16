@@ -261,13 +261,23 @@ jobs:
                 } else {
                   Write-Output "❌ Restart failed, performing fresh start..."
                   pm2 delete bun-test-app 2>$null
-                  pm2 start $absoluteIndexPath --name "bun-test-app"
+                  if ($env:BUN_AVAILABLE -eq "true") {
+                    pm2 start $absoluteIndexPath --name "bun-test-app" --interpreter bun
+                  } else {
+                    pm2 start $absoluteIndexPath --name "bun-test-app" --interpreter node
+                  }
                 }
               }
             } else {
               Write-Output "No existing process found. Starting new process..."
-              # -f オプションを追加して強制実行
-              pm2 start $absoluteIndexPath --name "bun-test-app" -f
+              # 環境変数をPM2に渡す
+              if ($env:BUN_AVAILABLE -eq "true") {
+                Write-Output "Starting with Bun interpreter..."
+                pm2 start $absoluteIndexPath --name "bun-test-app" --interpreter bun -f
+              } else {
+                Write-Output "Starting with Node.js interpreter..."
+                pm2 start $absoluteIndexPath --name "bun-test-app" --interpreter node -f
+              }
             }
             
             # 最終状態確認

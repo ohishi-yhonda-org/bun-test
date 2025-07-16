@@ -3,7 +3,7 @@ module.exports = {
     apps: [{
         name: 'bun-test-app',
         script: 'dist/index.js',
-        interpreter: 'node', // NodeJSを使用（BunバイナリがPM2で安定しない場合）
+        interpreter: 'bun', // Bunを使用
         env: {
             PORT: 3000,
             NODE_ENV: 'production',
