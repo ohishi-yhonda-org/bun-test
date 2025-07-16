@@ -1,8 +1,8 @@
 name: CI
 
 on:
-  push:
-    branches: ["main"]
+  # push:
+  #   branches: ["main"]
   pull_request:
     branches: ["main"]
 
@@ -195,7 +195,14 @@ jobs:
         run: |
           if (Test-Path "dist/index.js") {
             Write-Output "Starting application with pm2..."
-            pm2 start dist/index.js --name "bun-test-app" --watch --no-daemon
+            pm2 start dist/index.js --name "bun-test-app"
+            if ($LASTEXITCODE -eq 0) {
+              Write-Output "✓ Application started successfully with pm2"
+              pm2 save
+              pm2 logs bun-test-app --lines 100
+            } else {
+              Write-Output "❌ Failed to start application with pm2, exit code: $LASTEXITCODE"
+            }
           } else {
             Write-Output "❌ dist/index.js not found, cannot start application"
           }
