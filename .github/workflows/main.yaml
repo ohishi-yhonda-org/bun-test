@@ -175,6 +175,29 @@ jobs:
           } else {
             Write-Output "No build script found, skipping build"
           }
+        shell: powershell
+        
+      - name: Verify build output
+        run: |
+          Write-Output "Checking build output..."
+          Write-Output "Current directory: $(Get-Location)"
+          Write-Output "Contents of current directory:"
+          Get-ChildItem
+          
+          if (Test-Path "dist") {
+            Write-Output "Contents of dist directory:"
+            Get-ChildItem "dist" -Recurse
+          } else {
+            Write-Output "❌ dist directory not found"
+          }
+          
+          if (Test-Path "dist/index.js") {
+            $indexJsPath = Resolve-Path "dist/index.js"
+            Write-Output "✓ dist/index.js found at: $indexJsPath"
+            Write-Output "File size: $((Get-Item $indexJsPath).Length) bytes"
+          } else {
+            Write-Output "❌ dist/index.js not found"
+          }
         shell: powershell 
 
       #pm2がインストールされているか確認
@@ -196,7 +219,9 @@ jobs:
       - name: Start application with pm2
         run: |
           if (Test-Path "dist/index.js") {
+            $absoluteIndexPath = Resolve-Path "dist/index.js"
             Write-Output "Deploying application with pm2..."
+            Write-Output "Using absolute path: $absoluteIndexPath"
             
             # 既存のプロセスが存在するかチェック（より安全な方法）
             $processExists = $false
@@ -224,12 +249,12 @@ jobs:
                 } else {
                   Write-Output "❌ Restart failed, performing fresh start..."
                   pm2 delete bun-test-app 2>$null
-                  pm2 start dist/index.js --name "bun-test-app"
+                  pm2 start $absoluteIndexPath --name "bun-test-app"
                 }
               }
             } else {
               Write-Output "No existing process found. Starting new process..."
-              pm2 start dist/index.js --name "bun-test-app"
+              pm2 start $absoluteIndexPath --name "bun-test-app"
             }
             
             # 最終状態確認
