@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "build": "bun build src/index.ts --outdir=dist --target=bun",
-    "start": "bun run dist/index.js"
+    "build:node": "bun build src/index.ts --outdir=dist --target=node --format=esm",
+    "start": "bun run dist/index.js",
+    "start:node": "node dist/index.js"
   },
   "dependencies": {
     "@hono/node-server": "^1.12.0",
