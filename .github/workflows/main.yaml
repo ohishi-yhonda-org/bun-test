@@ -235,6 +235,17 @@ jobs:
             Write-Output "Deploying application with pm2..."
             Write-Output "Using absolute path: $absoluteIndexPath"
             
+            # PM2がサービスとして実行されている場合の対処
+            $pm2Service = Get-Service -Name "pm2.exe" -ErrorAction SilentlyContinue
+            if ($pm2Service -and $pm2Service.Status -eq "Running") {
+              Write-Output "⚠️ PM2 is running as Windows Service - this may cause issues with Bun integration"
+              Write-Output "Attempting to work around service limitations..."
+              
+              # サービス環境でのBun実行のための追加設定
+              $env:PM2_SERVICE_MODE = "true"
+              $env:PM2_LOG_LEVEL = "info"
+            }
+            
             # 既存のプロセスが存在するかチェック（複数の方法で確認）
             $processExists = $false
             try {
@@ -274,7 +285,16 @@ jobs:
                   Write-Output "❌ Restart failed, performing fresh start..."
                   pm2 delete bun-test-app 2>$null
                   if ($env:BUN_AVAILABLE -eq "true") {
-                    pm2 start $absoluteIndexPath --name "bun-test-app" --interpreter bun
+                    # PM2サービス環境でのBun実行テスト
+                    Write-Output "Testing Bun interpreter in PM2 service environment..."
+                    try {
+                      $bunPath = Get-Command bun -ErrorAction Stop
+                      Write-Output "Found Bun at: $($bunPath.Source)"
+                      pm2 start ecosystem.config.cjs --interpreter "$($bunPath.Source)"
+                    } catch {
+                      Write-Output "❌ Bun interpreter test failed, falling back to Node.js..."
+                      pm2 start $absoluteIndexPath --name "bun-test-app" --interpreter node
+                    }
                   } else {
                     pm2 start $absoluteIndexPath --name "bun-test-app" --interpreter node
                   }
@@ -327,19 +347,49 @@ jobs:
           Write-Output "=== Recent Output Logs ==="
           pm2 logs bun-test-app --out --lines 10 --nostream
           Write-Output "=== Network Check ==="
-          netstat -an | findstr :3000
-          Write-Output "=== Application Health Check ==="
-          Start-Sleep -Seconds 5
-          try {
-            $response = Invoke-WebRequest -Uri "http://localhost:3000" -TimeoutSec 10 -UseBasicParsing
-            Write-Output "✓ Application is responding on port 3000"
-            Write-Output "Status Code: $($response.StatusCode)"
-            Write-Output "Response: $($response.Content)"
-          } catch {
-            Write-Output "⚠️ Application health check failed: $_"
-            Write-Output "Checking if port 3000 is in use..."
-            Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Format-Table
-          }
+          netstat -an | findstr :3000              Write-Output "=== Application Health Check ==="
+              Start-Sleep -Seconds 5
+              try {
+                $response = Invoke-WebRequest -Uri "http://localhost:3000" -TimeoutSec 10 -UseBasicParsing
+                Write-Output "✓ Application is responding on port 3000"
+                Write-Output "Status Code: $($response.StatusCode)"
+                Write-Output "Response: $($response.Content)"
+              } catch {
+                Write-Output "⚠️ Application health check failed: $_"
+                Write-Output "This may be due to PM2 service limitations with Bun integration"
+                Write-Output "Checking if port 3000 is in use..."
+                Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Format-Table
+                
+                # PM2サービス環境での代替診断
+                Write-Output "=== PM2 Service Environment Diagnostics ==="
+                $pm2Service = Get-Service -Name "pm2.exe" -ErrorAction SilentlyContinue
+                if ($pm2Service) {
+                  Write-Output "PM2 Service Status: $($pm2Service.Status)"
+                  Write-Output "PM2 Service Start Type: $($pm2Service.StartType)"
+                }
+                
+                # 代替として直接Bunでテスト起動を試行
+                if ($env:BUN_AVAILABLE -eq "true") {
+                  Write-Output "=== Testing Direct Bun Execution ==="
+                  try {
+                    Write-Output "Attempting direct Bun execution test..."
+                    $bunTestJob = Start-Job -ScriptBlock { 
+                      Set-Location $using:PWD
+                      $env:PORT = 3001
+                      bun run dist/index.js
+                    }
+                    Start-Sleep -Seconds 3
+                    $testResponse = Invoke-WebRequest -Uri "http://localhost:3001" -TimeoutSec 5 -UseBasicParsing -ErrorAction SilentlyContinue
+                    if ($testResponse) {
+                      Write-Output "✓ Direct Bun execution successful - PM2 service issue confirmed"
+                    }
+                    Stop-Job $bunTestJob -ErrorAction SilentlyContinue
+                    Remove-Job $bunTestJob -ErrorAction SilentlyContinue
+                  } catch {
+                    Write-Output "Direct Bun test also failed: $_"
+                  }
+                }
+              }
           Write-Output "=== Deployment Complete ==="
         shell: powershell
 
