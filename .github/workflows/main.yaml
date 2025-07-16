@@ -9,7 +9,13 @@ on:
 jobs:
   build:
     runs-on: [self-hosted, Windows, X64,test]
-
+    env:
+      DB_USERNAME: ${{ secrets.DB_USERNAME }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_PORT: ${{ secrets.DB_PORT || '1433' }}
+      DATABASE: ${{ secrets.DATABASE }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
       - uses: actions/checkout@v3
       
@@ -91,8 +97,42 @@ jobs:
           }
         shell: powershell
         
+      - name: Verify environment variables
+     
+        run: |
+          Write-Output "Checking environment variables for Prisma..."
+          if ($env:DB_USERNAME) {
+            Write-Output "✓ DB_USERNAME is set"
+          } else {
+            Write-Output "⚠️ DB_USERNAME is not set"
+          }
+          if ($env:DB_HOST) {
+            Write-Output "✓ DB_HOST is set"
+          } else {
+            Write-Output "⚠️ DB_HOST is not set"
+          }
+          if ($env:DATABASE) {
+            Write-Output "✓ DATABASE is set"
+          } else {
+            Write-Output "⚠️ DATABASE is not set"
+          }
+          if ($env:DATABASE_URL) {
+            Write-Output "✓ DATABASE_URL is set"
+          } else {
+            Write-Output "⚠️ DATABASE_URL is not set"
+          }
+        shell: powershell
+        
       - name: generate Prisma client
         run: |
+          # DATABASE_URLが設定されていない場合は動的に生成
+          if (-not $env:DATABASE_URL -and $env:DB_USERNAME -and $env:DB_PASSWORD -and $env:DB_HOST -and $env:DATABASE) {
+            $encodedDatabase = [System.Web.HttpUtility]::UrlEncode($env:DATABASE)
+            $dynamicDatabaseUrl = "sqlserver://$($env:DB_USERNAME):$($env:DB_PASSWORD)@$($env:DB_HOST):$($env:DB_PORT)/$encodedDatabase?schema=dbo"
+            Write-Output "Generated DATABASE_URL dynamically"
+            $env:DATABASE_URL = $dynamicDatabaseUrl
+          }
+          
           if ($env:BUN_AVAILABLE -eq "true") {
             Write-Output "Generating Prisma client with Bun..."
             try {
