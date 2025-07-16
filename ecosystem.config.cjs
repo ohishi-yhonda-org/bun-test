@@ -3,12 +3,21 @@ module.exports = {
     apps: [{
         name: 'bun-test-app',
         script: 'dist/index.js',
-        interpreter: 'bun', // <-- PM2にBunを使用するように指示するためにこの行を追加
+        interpreter: 'node', // NodeJSを使用（BunバイナリがPM2で安定しない場合）
         env: {
-            PORT: 3000, // アプリケーションがこのポートを使用する場合
+            PORT: 3000,
+            NODE_ENV: 'production'
         },
-        // このパスが正しく、絶対パスであることを確認してください
-        cwd: 'C:/actions-runner/_work/bun-test/bun-test/', // <-- これは重要です
-        // ... その他のPM2設定
+        // 作業ディレクトリを相対パスで指定（CI/CD環境で動的に決定）
+        cwd: process.cwd(),
+        // PM2設定の改善
+        instances: 1,
+        exec_mode: 'fork',
+        watch: false,
+        max_memory_restart: '1G',
+        error_file: './logs/err.log',
+        out_file: './logs/out.log',
+        log_file: './logs/combined.log',
+        time: true
     }]
 };

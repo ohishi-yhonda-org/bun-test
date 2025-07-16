@@ -275,8 +275,9 @@ jobs:
               Write-Output "✓ Application deployment completed successfully"
               pm2 save
               pm2 list
-              Write-Output "Recent logs:"
-              pm2 logs bun-test-app --lines 20 2>$null
+              Write-Output "Recent logs (last 10 lines):"
+              pm2 logs bun-test-app --lines 10 --nostream
+              Write-Output "Application is running in background. Workflow completed."
             } else {
               Write-Output "❌ Failed to deploy application with pm2, exit code: $LASTEXITCODE"
               Write-Output "PM2 status:"
@@ -285,5 +286,20 @@ jobs:
           } else {
             Write-Output "❌ dist/index.js not found, cannot deploy application"
           }
+        shell: powershell
+        
+      - name: Final status check
+        run: |
+          Write-Output "=== Final Deployment Status ==="
+          pm2 list
+          Write-Output "=== Application Health Check ==="
+          try {
+            $response = Invoke-WebRequest -Uri "http://localhost:3000" -TimeoutSec 5 -UseBasicParsing
+            Write-Output "✓ Application is responding on port 3000"
+            Write-Output "Status Code: $($response.StatusCode)"
+          } catch {
+            Write-Output "⚠️ Application health check failed or port not responding: $_"
+          }
+          Write-Output "=== Deployment Complete ==="
         shell: powershell
 
