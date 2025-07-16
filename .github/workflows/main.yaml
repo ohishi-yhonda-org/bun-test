@@ -10,6 +10,8 @@ jobs:
   build:
     # add change
     # lest
+    # change 2
+    #change3 
     runs-on: [self-hosted, Windows, X64,test]
     env:
       DB_USERNAME: ${{ secrets.DB_USERNAME }}
