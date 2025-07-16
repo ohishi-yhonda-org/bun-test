@@ -52,10 +52,21 @@ app.get('/', (c) => {
 
 // サーバーを起動
 const port = process.env.PORT || 3000
-console.log(`Starting server on port ${port}`)
 
 // PM2環境での起動を検出
 const isPM2 = process.env.PM2_HOME !== undefined
+
+// ログをファイルに書き込む関数
+function logToFile(message: string) {
+  const timestamp = new Date().toISOString()
+  const logMessage = `[${timestamp}] ${message}\n`
+
+  // 標準出力とエラー出力の両方に書き込み
+  process.stdout.write(logMessage)
+  process.stderr.write(logMessage)
+}
+
+logToFile(`Starting server on port ${port}`)
 
 // Bunサーバーを起動
 try {
@@ -64,14 +75,20 @@ try {
     fetch: app.fetch,
   })
 
-  console.log(`Server is running on http://localhost:${server.port}`)
-  
+  logToFile(`Server is running on http://localhost:${server.port}`)
+
   // PM2環境では、プロセスが正常に起動したことを明示的に通知
   if (isPM2) {
-    console.log('PM2 environment detected, server started successfully')
+    logToFile('PM2 environment detected, server started successfully')
   }
+
+  // サーバーが正常に起動したことを確認するためのヘルスチェック
+  setInterval(() => {
+    logToFile(`Server health check: running on port ${server.port}`)
+  }, 30000) // 30秒ごと
+
 } catch (error) {
-  console.error('Failed to start Bun server:', error)
+  logToFile(`Failed to start Bun server: ${error}`)
   process.exit(1)
 }
 
