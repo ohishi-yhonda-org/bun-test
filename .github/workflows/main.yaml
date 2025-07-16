@@ -8,6 +8,7 @@ on:
 
 jobs:
   build:
+    #test
     runs-on: [self-hosted, Windows, X64,test]
     env:
       DB_USERNAME: ${{ secrets.DB_USERNAME }}
