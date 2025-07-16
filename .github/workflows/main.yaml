@@ -198,10 +198,21 @@ jobs:
           if (Test-Path "dist/index.js") {
             Write-Output "Deploying application with pm2..."
             
-            # 既存のプロセスが存在するかチェック
-            $existingProcess = pm2 show bun-test-app 2>$null
-            if ($LASTEXITCODE -eq 0) {
-              Write-Output "Existing process found. Performing zero-downtime reload..."
+            # 既存のプロセスが存在するかチェック（より安全な方法）
+            $processExists = $false
+            try {
+              $processList = pm2 jlist | ConvertFrom-Json
+              $existingProcess = $processList | Where-Object { $_.name -eq "bun-test-app" }
+              if ($existingProcess) {
+                $processExists = $true
+                Write-Output "Existing process found. Current status: $($existingProcess.pm2_env.status)"
+              }
+            } catch {
+              Write-Output "Could not check existing processes, assuming no existing process"
+            }
+            
+            if ($processExists) {
+              Write-Output "Performing zero-downtime reload..."
               pm2 reload bun-test-app
               if ($LASTEXITCODE -eq 0) {
                 Write-Output "✓ Application reloaded successfully with pm2 (zero-downtime)"
@@ -227,7 +238,7 @@ jobs:
               pm2 save
               pm2 list
               Write-Output "Recent logs:"
-              pm2 logs bun-test-app --lines 20
+              pm2 logs bun-test-app --lines 20 2>$null
             } else {
               Write-Output "❌ Failed to deploy application with pm2, exit code: $LASTEXITCODE"
               Write-Output "PM2 status:"
