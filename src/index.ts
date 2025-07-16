@@ -54,13 +54,26 @@ app.get('/', (c) => {
 const port = process.env.PORT || 3000
 console.log(`Starting server on port ${port}`)
 
-// Bunサーバーを起動
-const server = Bun.serve({
-  port: Number(port),
-  fetch: app.fetch,
-})
+// PM2環境での起動を検出
+const isPM2 = process.env.PM2_HOME !== undefined
 
-console.log(`Server is running on http://localhost:${server.port}`)
+// Bunサーバーを起動
+try {
+  const server = Bun.serve({
+    port: Number(port),
+    fetch: app.fetch,
+  })
+
+  console.log(`Server is running on http://localhost:${server.port}`)
+  
+  // PM2環境では、プロセスが正常に起動したことを明示的に通知
+  if (isPM2) {
+    console.log('PM2 environment detected, server started successfully')
+  }
+} catch (error) {
+  console.error('Failed to start Bun server:', error)
+  process.exit(1)
+}
 
 export default {
   port: port,
