@@ -6,7 +6,14 @@ module.exports = {
         interpreter: 'node', // NodeJSを使用（BunバイナリがPM2で安定しない場合）
         env: {
             PORT: 3000,
-            NODE_ENV: 'production'
+            NODE_ENV: 'production',
+            // 環境変数を明示的に設定
+            DB_USERNAME: process.env.DB_USERNAME,
+            DB_PASSWORD: process.env.DB_PASSWORD,
+            DB_HOST: process.env.DB_HOST,
+            DB_PORT: process.env.DB_PORT || 1433,
+            DATABASE: process.env.DATABASE,
+            DATABASE_URL: process.env.DATABASE_URL
         },
         // 作業ディレクトリを相対パスで指定（CI/CD環境で動的に決定）
         cwd: process.cwd(),

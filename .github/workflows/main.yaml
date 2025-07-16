@@ -292,13 +292,25 @@ jobs:
         run: |
           Write-Output "=== Final Deployment Status ==="
           pm2 list
+          Write-Output "=== PM2 Process Details ==="
+          pm2 show bun-test-app
+          Write-Output "=== Recent Error Logs ==="
+          pm2 logs bun-test-app --err --lines 10 --nostream
+          Write-Output "=== Recent Output Logs ==="
+          pm2 logs bun-test-app --out --lines 10 --nostream
+          Write-Output "=== Network Check ==="
+          netstat -an | findstr :3000
           Write-Output "=== Application Health Check ==="
+          Start-Sleep -Seconds 5
           try {
-            $response = Invoke-WebRequest -Uri "http://localhost:3000" -TimeoutSec 5 -UseBasicParsing
+            $response = Invoke-WebRequest -Uri "http://localhost:3000" -TimeoutSec 10 -UseBasicParsing
             Write-Output "✓ Application is responding on port 3000"
             Write-Output "Status Code: $($response.StatusCode)"
+            Write-Output "Response: $($response.Content)"
           } catch {
-            Write-Output "⚠️ Application health check failed or port not responding: $_"
+            Write-Output "⚠️ Application health check failed: $_"
+            Write-Output "Checking if port 3000 is in use..."
+            Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | Format-Table
           }
           Write-Output "=== Deployment Complete ==="
         shell: powershell

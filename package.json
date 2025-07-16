@@ -4,7 +4,8 @@
 
   "scripts": {
     "dev": "bun run --hot src/index.ts",
-    "build": "bun build src/index.ts --outdir=dist --target=node"
+    "build": "bun build src/index.ts --outdir=dist --target=node",
+    "start": "node dist/index.js"
   },
   "dependencies": {
     "@hono/swagger-ui": "^0.5.2",

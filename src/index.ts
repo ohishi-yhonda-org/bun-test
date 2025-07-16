@@ -41,5 +41,20 @@ app.route('/unten', untenApi)
     },
   }).get('/doc', swaggerUI({ url: '/specification' }))
 
+// ヘルスチェック用のルート
+app.get('/', (c) => {
+  return c.json({
+    message: 'Bun Test API is running!',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  })
+})
 
-export default app
+// サーバーを起動
+const port = process.env.PORT || 3000
+console.log(`Starting server on port ${port}`)
+
+export default {
+  port: port,
+  fetch: app.fetch,
+}
