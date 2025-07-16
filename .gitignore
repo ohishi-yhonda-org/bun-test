@@ -13,3 +13,5 @@ node_modules/
 
 # Bun config
 bunconfig.toml
+
+dist/
