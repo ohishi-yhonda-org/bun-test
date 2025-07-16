@@ -75,7 +75,7 @@ try {
   process.exit(1)
 }
 
-export default {
-  port: port,
-  fetch: app.fetch,
-}
+// export default {
+//   port: port,
+//   fetch: app.fetch,
+// }
