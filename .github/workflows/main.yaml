@@ -184,6 +184,8 @@ jobs:
             $pm2Version = pm2 --version 2>$null
             if ($LASTEXITCODE -eq 0) {
               Write-Output "✓ pm2 is available, version: $pm2Version"
+              Write-Output "Current PM2 processes:"
+              pm2 list
             } else {
               throw "pm2 command failed"
             }
@@ -194,17 +196,45 @@ jobs:
       - name: Start application with pm2
         run: |
           if (Test-Path "dist/index.js") {
-            Write-Output "Starting application with pm2..."
-            pm2 start dist/index.js --name "bun-test-app"
+            Write-Output "Deploying application with pm2..."
+            
+            # 既存のプロセスが存在するかチェック
+            $existingProcess = pm2 show bun-test-app 2>$null
             if ($LASTEXITCODE -eq 0) {
-              Write-Output "✓ Application started successfully with pm2"
-              pm2 save
-              pm2 logs bun-test-app --lines 100
+              Write-Output "Existing process found. Performing zero-downtime reload..."
+              pm2 reload bun-test-app
+              if ($LASTEXITCODE -eq 0) {
+                Write-Output "✓ Application reloaded successfully with pm2 (zero-downtime)"
+              } else {
+                Write-Output "❌ Reload failed, attempting restart..."
+                pm2 restart bun-test-app
+                if ($LASTEXITCODE -eq 0) {
+                  Write-Output "✓ Application restarted successfully with pm2"
+                } else {
+                  Write-Output "❌ Restart failed, performing fresh start..."
+                  pm2 delete bun-test-app 2>$null
+                  pm2 start dist/index.js --name "bun-test-app"
+                }
+              }
             } else {
-              Write-Output "❌ Failed to start application with pm2, exit code: $LASTEXITCODE"
+              Write-Output "No existing process found. Starting new process..."
+              pm2 start dist/index.js --name "bun-test-app"
+            }
+            
+            # 最終状態確認
+            if ($LASTEXITCODE -eq 0) {
+              Write-Output "✓ Application deployment completed successfully"
+              pm2 save
+              pm2 list
+              Write-Output "Recent logs:"
+              pm2 logs bun-test-app --lines 20
+            } else {
+              Write-Output "❌ Failed to deploy application with pm2, exit code: $LASTEXITCODE"
+              Write-Output "PM2 status:"
+              pm2 list
             }
           } else {
-            Write-Output "❌ dist/index.js not found, cannot start application"
+            Write-Output "❌ dist/index.js not found, cannot deploy application"
           }
         shell: powershell
 
