@@ -98,7 +98,6 @@ jobs:
         shell: powershell
         
       - name: Verify environment variables
-     
         run: |
           Write-Output "Checking environment variables for Prisma..."
           if ($env:DB_USERNAME) {
