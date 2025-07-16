@@ -209,6 +209,18 @@ jobs:
               Write-Output "✓ pm2 is available, version: $pm2Version"
               Write-Output "Current PM2 processes:"
               pm2 list
+              
+              # Bunインタープリターの確認
+              if ($env:BUN_AVAILABLE -eq "true") {
+                Write-Output "Testing Bun interpreter with PM2..."
+                $testScript = "console.log('Bun test successful')"
+                $testScript | Out-File -FilePath "test-bun.js" -Encoding utf8
+                pm2 start test-bun.js --name "bun-test" --interpreter bun
+                Start-Sleep -Seconds 3
+                pm2 logs bun-test --lines 5 --nostream
+                pm2 delete bun-test 2>$null
+                Remove-Item "test-bun.js" -Force -ErrorAction SilentlyContinue
+              }
             } else {
               throw "pm2 command failed"
             }
@@ -273,10 +285,16 @@ jobs:
               # 環境変数をPM2に渡す
               if ($env:BUN_AVAILABLE -eq "true") {
                 Write-Output "Starting with Bun interpreter..."
-                pm2 start $absoluteIndexPath --name "bun-test-app" --interpreter bun -f
+                pm2 start $absoluteIndexPath --name "bun-test-app" --interpreter bun --env PORT=3000 -f
               } else {
                 Write-Output "Starting with Node.js interpreter..."
-                pm2 start $absoluteIndexPath --name "bun-test-app" --interpreter node -f
+                # Node.js用のビルドが必要な場合のための対応
+                Write-Output "Rebuilding for Node.js target..."
+                if (Test-Path "dist") {
+                  Remove-Item "dist" -Recurse -Force
+                }
+                bun build src/index.ts --outdir=dist --target=node --format=esm
+                pm2 start $absoluteIndexPath --name "bun-test-app" --interpreter node --env PORT=3000 -f
               }
             }
             

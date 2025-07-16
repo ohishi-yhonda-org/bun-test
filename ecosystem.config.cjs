@@ -4,16 +4,17 @@ module.exports = {
         name: 'bun-test-app',
         script: 'dist/index.js',
         interpreter: 'bun', // Bunを使用
+        interpreter_args: [], // Bunの追加引数
         env: {
             PORT: 3000,
             NODE_ENV: 'production',
             // 環境変数を明示的に設定
-            DB_USERNAME: process.env.DB_USERNAME,
-            DB_PASSWORD: process.env.DB_PASSWORD,
-            DB_HOST: process.env.DB_HOST,
-            DB_PORT: process.env.DB_PORT || 1433,
-            DATABASE: process.env.DATABASE,
-            DATABASE_URL: process.env.DATABASE_URL
+            DB_USERNAME: process.env.DB_USERNAME || '',
+            DB_PASSWORD: process.env.DB_PASSWORD || '',
+            DB_HOST: process.env.DB_HOST || '',
+            DB_PORT: process.env.DB_PORT || '1433',
+            DATABASE: process.env.DATABASE || '',
+            DATABASE_URL: process.env.DATABASE_URL || ''
         },
         // 作業ディレクトリを相対パスで指定（CI/CD環境で動的に決定）
         cwd: process.cwd(),
@@ -25,6 +26,9 @@ module.exports = {
         error_file: './logs/err.log',
         out_file: './logs/out.log',
         log_file: './logs/combined.log',
-        time: true
+        time: true,
+        // Bunでの起動に必要な設定
+        node_args: [],
+        args: []
     }]
 };
