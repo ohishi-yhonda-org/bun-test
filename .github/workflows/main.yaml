@@ -191,5 +191,13 @@ jobs:
             Write-Output "⚠️ pm2 not available or failed to execute: $_"
           }
         shell: powershell
-        
+      - name: Start application with pm2
+        run: |
+          if (Test-Path "dist/index.js") {
+            Write-Output "Starting application with pm2..."
+            pm2 start dist/index.js --name "bun-test-app" --watch --no-daemon
+          } else {
+            Write-Output "❌ dist/index.js not found, cannot start application"
+          }
+        shell: powershell
 
