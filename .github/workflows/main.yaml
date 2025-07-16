@@ -156,25 +156,15 @@ jobs:
         run: |
           $packageJson = Get-Content "package.json" | ConvertFrom-Json
           if ($packageJson.scripts.build) {
-            # PM2サービス環境の検出
-            $pm2Service = Get-Service -Name "pm2.exe" -ErrorAction SilentlyContinue
-            $isServiceMode = $pm2Service -and $pm2Service.Status -eq "Running"
-            
             if ($env:BUN_AVAILABLE -eq "true") {
-              Write-Output "Building with Bun..."
+              Write-Output "Building with Bun for Node.js compatibility..."
               try {
-                if ($isServiceMode) {
-                  Write-Output "PM2 service detected - building with Node.js compatibility..."
-                  # PM2サービス環境ではNode.js互換のビルドを作成
-                  bun build src/index.ts --outdir=dist --target=node --format=esm
-                } else {
-                  # 通常のBunビルド
-                  bun run build
-                }
+                # 常にNode.js互換のビルドを実行（PM2サービス環境対応）
+                bun run build
                 if ($LASTEXITCODE -ne 0) {
                   throw "Bun build failed with exit code $LASTEXITCODE"
                 }
-                Write-Output "✓ Build completed successfully with Bun"
+                Write-Output "✓ Build completed successfully with Bun (Node.js target)"
               } catch {
                 Write-Output "❌ Bun build failed: $_"
                 Write-Output "Falling back to npm..."
@@ -296,22 +286,9 @@ jobs:
                 } else {
                   Write-Output "❌ Restart failed, performing fresh start..."
                   pm2 delete bun-test-app 2>$null
-                  if ($env:BUN_AVAILABLE -eq "true" -and -not $pm2Service) {
-                    # PM2サービス環境でのBun実行テスト
-                    Write-Output "Testing Bun interpreter in PM2 service environment..."
-                    try {
-                      $bunPath = Get-Command bun -ErrorAction Stop
-                      Write-Output "Found Bun at: $($bunPath.Source)"
-                      pm2 start ecosystem.config.cjs --interpreter "$($bunPath.Source)"
-                    } catch {
-                      Write-Output "❌ Bun interpreter test failed, falling back to Node.js..."
-                      pm2 start $absoluteIndexPath --name "bun-test-app" --interpreter node
-                    }
-                  } else {
-                    # PM2サービス環境の場合は常にNode.jsを使用
-                    Write-Output "PM2 service environment - using Node.js interpreter for compatibility..."
-                    pm2 start $absoluteIndexPath --name "bun-test-app" --interpreter node
-                  }
+                  # @hono/node-serverを使用しているため、常にNode.jsインタープリターを使用
+                  Write-Output "Using Node.js interpreter for @hono/node-server compatibility..."
+                  pm2 start ecosystem.config.cjs
                 }
               }
             } else {

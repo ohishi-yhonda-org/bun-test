@@ -3,14 +3,13 @@ module.exports = {
     apps: [{
         name: 'bun-test-app',
         script: 'dist/index.js',
-        interpreter: 'C:\\Users\\Administrator\\.bun\\bin\\bun.exe', // Bunの絶対パスを使用
-        interpreter_args: [], // Bunの追加引数
+        interpreter: 'node', // @hono/node-serverと互換性の高いNode.jsを使用
+        interpreter_args: [], // Node.jsの追加引数
         env: {
             PORT: 3000,
             NODE_ENV: 'production',
-            // PM2サービス環境でのBun実行のための設定
-            PM2_SERVICE_MODE: 'true',
-            BUN_FORCE_COLORS: '0',
+            // @hono/node-serverでの実行のための設定
+            NODE_OPTIONS: '--enable-source-maps',
             // 環境変数を明示的に設定
             DB_USERNAME: process.env.DB_USERNAME || '',
             DB_PASSWORD: process.env.DB_PASSWORD || '',

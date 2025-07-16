@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { OpenAPIHono } from '@hono/zod-openapi'
+import { serve } from '@hono/node-server'
 
 import { PrismaClient } from "../prisma/src/generated/prisma"; // TypeScriptの場合
 import { env, getRuntimeKey } from 'hono/adapter'
@@ -68,27 +69,29 @@ function logToFile(message: string) {
 
 logToFile(`Starting server on port ${port}`)
 
-// Bunサーバーを起動
+// @hono/node-serverを使用してサーバーを起動
 try {
-  const server = Bun.serve({
-    port: Number(port),
+  logToFile('Using @hono/node-server for reliable PM2 compatibility')
+
+  serve({
     fetch: app.fetch,
+    port: Number(port),
   })
 
-  logToFile(`Server is running on http://localhost:${server.port}`)
+  logToFile(`Server is running on http://localhost:${port}`)
 
   // PM2環境では、プロセスが正常に起動したことを明示的に通知
   if (isPM2) {
-    logToFile('PM2 environment detected, server started successfully')
+    logToFile('PM2 environment detected, server started successfully with @hono/node-server')
   }
 
   // サーバーが正常に起動したことを確認するためのヘルスチェック
   setInterval(() => {
-    logToFile(`Server health check: running on port ${server.port}`)
+    logToFile(`Server health check: running on port ${port}`)
   }, 30000) // 30秒ごと
 
 } catch (error) {
-  logToFile(`Failed to start Bun server: ${error}`)
+  logToFile(`Failed to start server: ${error}`)
   process.exit(1)
 }
 
