@@ -12,6 +12,7 @@ jobs:
     # lest
     # change 2
     #change3 
+    #tet2
     runs-on: [self-hosted, Windows, X64,test]
     env:
       DB_USERNAME: ${{ secrets.DB_USERNAME }}
