@@ -3,8 +3,8 @@ module.exports = {
     apps: [{
         name: 'bun-test-app',
         script: 'src/index.ts',
-        interpreter: 'bun', // Bunを使用（libsqlと互換性あり）
-        interpreter_args: ['run'], // Bunの実行引数
+        interpreter: 'node', // @hono/node-serverと互換性の高いNode.jsを使用
+        interpreter_args: [], // Node.jsの追加引数
         env: {
             PORT: 3000,
             NODE_ENV: 'production',
