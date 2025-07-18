@@ -289,27 +289,16 @@ jobs:
                 } else {
                   Write-Output "❌ Restart failed, performing fresh start..."
                   pm2 delete bun-test-app 2>$null
-                  # @hono/node-serverを使用しているため、常にNode.jsインタープリターを使用
-                  Write-Output "Using Node.js interpreter for @hono/node-server compatibility..."
+                  # ecosystem.config.cjsを使用してBunインタープリターで起動
+                  Write-Output "Starting with ecosystem.config.cjs configuration..."
                   pm2 start ecosystem.config.cjs
                 }
               }
             } else {
               Write-Output "No existing process found. Starting new process..."
-              # 環境変数をPM2に渡す
-              if ($env:BUN_AVAILABLE -eq "true") {
-                Write-Output "Starting with Bun interpreter..."
-                pm2 start $absoluteIndexPath --name "bun-test-app" --interpreter bun --env PORT=3000 -f
-              } else {
-                Write-Output "Starting with Node.js interpreter..."
-                # Node.js用のビルドが必要な場合のための対応
-                Write-Output "Rebuilding for Node.js target..."
-                if (Test-Path "dist") {
-                  Remove-Item "dist" -Recurse -Force
-                }
-                bun build src/index.ts --outdir=dist --target=node --format=esm
-                pm2 start $absoluteIndexPath --name "bun-test-app" --interpreter node --env PORT=3000 -f
-              }
+              # ecosystem.config.cjsを使用して一貫した設定で起動
+              Write-Output "Starting with ecosystem.config.cjs configuration..."
+              pm2 start ecosystem.config.cjs
             }
             
             # 最終状態確認
