@@ -49,8 +49,8 @@ export const sqliteTestAddHandler: RouteHandler<typeof sqliteTestAddRoute, ENV> 
     try {
         await db.insert(users).values(userData);
         return c.json({}, 200);
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error adding user:', error);
-        return c.json({ error: 'Internal Server Error' }, 500);
+        return c.json({ error: 'Internal Server Error' + error.message }, 500);
     }
 }
