@@ -18,6 +18,16 @@ jobs:
       DATABASE: ${{ secrets.DATABASE }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
+
+      
+      - name: Move PM2 logs to workspace-external directory
+        run: |
+          $externalLogDir = "C:\pm2-logs"
+          if (!(Test-Path $externalLogDir)) {
+            New-Item -ItemType Directory -Path $externalLogDir | Out-Null
+          }
+        shell: powershell
+
       - uses: actions/checkout@v3
       
       - name: Set up Node.js
@@ -377,6 +387,7 @@ jobs:
           }
         shell: powershell
         
+
       - name: Final status check
         run: |
           Write-Output "=== Final Deployment Status ==="
