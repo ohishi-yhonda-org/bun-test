@@ -310,7 +310,7 @@ jobs:
           try {
             bun run drizzle-kit generate
             bun run drizzle-kit migrate
-          }catch($_) {
+          } catch {
             Write-Output "❌ Migration failed: $_"
             exit 1
           }
