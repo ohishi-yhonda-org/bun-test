@@ -303,13 +303,13 @@ jobs:
             
             # 最終状態確認
             Start-Sleep -Seconds 2  # PM2起動の安定化を待つ
-            $pm2Status = pm2 list | ConvertFrom-Json
+            $pm2Status = pm2 jlist | ConvertFrom-Json
             $appProcess = $pm2Status | Where-Object { $_.name -eq "bun-test-app" }
             
             if ($appProcess -and $appProcess.pm2_env.status -eq "online") {
               Write-Output "✓ Application deployment completed successfully"
               pm2 save
-              pm2 list
+              pm2 jlist
               Write-Output "Recent logs (last 10 lines):"
               pm2 logs bun-test-app --lines 10 --nostream
               Write-Output "Application is running in background. Workflow completed."
