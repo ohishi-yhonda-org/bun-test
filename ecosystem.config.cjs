@@ -24,9 +24,9 @@ module.exports = {
         exec_mode: 'fork',
         watch: false,
         max_memory_restart: '1G',
-        error_file: './logs/err.log',
-        out_file: './logs/out.log',
-        log_file: './logs/combined.log',
+        error_file: 'C:\\pm2-logs\\err.log',
+        out_file: 'C:\\pm2-logs\\out.log',
+        log_file: 'C:\\pm2-logs\\combined.log',
         time: true,
         // Bunでの起動に必要な設定
         node_args: [],
