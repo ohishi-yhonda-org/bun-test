@@ -410,4 +410,17 @@ jobs:
           # 最終的に成功を明示
           exit 0
         shell: powershell
-
+      - name: migrate sqlite if tag is migrate
+        if: contains(github.ref, 'migrate')
+        run: |
+          Write-Output "Running migration for SQLite database..."
+          Write-Output "SQLite database found, running migrations..."
+          try {
+            bun run drizzle-kit generate
+            bun run drizzle-kit migrate
+          }catch($_) {
+            Write-Output "❌ Migration failed: $_"
+            exit 1
+          }
+          Write-Output "Migration completed successfully"
+        shell: powershell

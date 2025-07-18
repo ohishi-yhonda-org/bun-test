@@ -1,5 +1,6 @@
 import { z } from "@hono/zod-openapi"
 import { sha } from "bun";
+import id from "zod/v4/locales/id.cjs";
 
 // 今日の日付をISO形式で取得する関数（UTC時間で00:00:00）
 const getTodayISO = () => {
@@ -198,3 +199,101 @@ export const UntenDetailParamsSchema = z.object({
     type: 'object',
     description: 'パラメータスキーマ'
 });
+export const sqliteTestListUsers = z.object({
+    id: z.number().openapi({
+        example: 1
+    }),
+    name: z.string().openapi({
+        example: "John Doe"
+    }),
+    email: z.string().openapi({
+        example: "john.doe@example.com"
+    }),
+    age: z.number().openapi({
+        example: 30
+    }).nullable()
+}).openapi("sqliteTestListUsers", {
+    type: "object",
+    description: "SQLite Test List Users",
+    properties: {
+        id: {
+            type: "number",
+            example: 1
+        },
+        name: {
+            type: "string",
+            example: "John Doe"
+        },
+        email: {
+            type: "string",
+            example: "john.doe@example.com"
+        },
+        age: {
+            type: "number",
+            example: 30,
+            nullable: true
+        }
+    }
+});
+export const sqliteTestListUsersArray = z.array(sqliteTestListUsers).openapi("sqliteTestListUsersArray", {
+    type: "array",
+    description: "SQLite Test List Users Array",
+    items: {
+        $ref: "#/components/schemas/sqliteTestListUsers"
+    }
+});
+
+export const sqliteTestListResponseSchema = z.array(sqliteTestListUsers).openapi("sqliteTestListResponseSchema", {
+    type: "array",
+    description: "SQLite Test List Response",
+    items: {
+        $ref: "#/components/schemas/sqliteTestListUsers"
+    }
+});
+
+export const sqliteTestListParamsSchema = z.object({
+    id: z.string().optional().nullable(),
+    name: z.string().optional().nullable(),
+    email: z.string().optional().nullable(),
+    age: z.string().optional().nullable(),
+}).openapi("sqliteTestListParamsSchema", {
+    type: "object",
+    description: "SQLite Test List Params",
+    properties: {
+        id: {
+            type: "string",
+            example: "1",
+            nullable: true
+        },
+        name: {
+            type: "string",
+            example: "John Doe",
+            nullable: true
+        },
+        email: {
+            type: "string",
+            example: "john.doe@example.com",
+            nullable: true
+        },
+        age: {
+            type: "string",
+            example: "30",
+            nullable: true
+        }
+    }
+});
+
+export const NullResponseSchema = z.object({
+    message: z.string().optional().nullable().openapi({ example: 'No content' })
+}).openapi("NullResponseSchema", {
+    type: "object",
+    description: "No content",
+    properties: {
+        message: {
+            type: "string",
+            nullable: true,
+            example: "No content"
+        }
+    }
+});
+
