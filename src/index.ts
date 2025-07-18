@@ -11,6 +11,7 @@ import { createMiddleware } from 'hono/factory'
 import { PrismaMssql } from '@prisma/adapter-mssql';
 import * as mssql from 'mssql';
 import { untenApi } from './unten';
+import { sqliteTestApi } from './sqliteTest';
 
 export type ENV = {
   Bindings: {
@@ -34,6 +35,7 @@ const app = new OpenAPIHono<ENV>()
 
 
 app.route('/unten', untenApi)
+  .route('/sqliteTest', sqliteTestApi)
   .doc31('/specification', {
     openapi: '3.0.0',
     info: {
