@@ -3,13 +3,12 @@ module.exports = {
     apps: [{
         name: 'bun-test-app',
         script: 'dist/index.js',
-        interpreter: 'node', // @hono/node-serverと互換性の高いNode.jsを使用
-        interpreter_args: [], // Node.jsの追加引数
+        interpreter: 'node', // Node.jsを使用してSQLiteライブラリとの互換性を確保
+        interpreter_args: [], // Node.jsの実行引数
         env: {
             PORT: 3000,
             NODE_ENV: 'production',
-            // @hono/node-serverでの実行のための設定
-            NODE_OPTIONS: '--enable-source-maps',
+            // Node.jsでの実行のための設定
             // 環境変数を明示的に設定
             DB_USERNAME: process.env.DB_USERNAME || '',
             DB_PASSWORD: process.env.DB_PASSWORD || '',
@@ -29,10 +28,10 @@ module.exports = {
         out_file: './logs/out.log',
         log_file: './logs/combined.log',
         time: true,
-        // Bunでの起動に必要な設定
+        // Node.jsでの起動に必要な設定
         node_args: [],
         args: [],
-        // PM2でのBun実行時の設定
+        // PM2でのNode.js実行時の設定
         merge_logs: true,
         log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
         // 標準出力をキャプチャするための設定

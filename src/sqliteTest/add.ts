@@ -1,8 +1,8 @@
 import { createRoute, z, RouteHandler } from "@hono/zod-openapi";
 import { sqliteTestListUsers, ErrorResponseSchema, NullResponseSchema } from "../openApi/schema";
 import { ENV } from "..";
-import { Database } from "bun:sqlite";
-import { drizzle } from "drizzle-orm/bun-sqlite";
+import { createClient } from "@libsql/client";
+import { drizzle } from "drizzle-orm/libsql";
 import { users } from "../db/schema";
 
 export const sqliteTestAddRoute = createRoute({
@@ -40,8 +40,10 @@ export const sqliteTestAddRoute = createRoute({
 type sqliteTestListUsers = z.infer<typeof sqliteTestListUsers>;
 
 export const sqliteTestAddHandler: RouteHandler<typeof sqliteTestAddRoute, ENV> = async (c) => {
-    const sqlite = new Database('sqlite.db');
-    const db = drizzle({ client: sqlite });
+    const client = createClient({
+        url: "file:sqlite.db"
+    });
+    const db = drizzle(client);
     const userData = await c.req.json<sqliteTestListUsers>();
 
     try {
