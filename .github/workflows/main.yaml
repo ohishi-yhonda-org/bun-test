@@ -27,6 +27,10 @@ jobs:
             New-Item -ItemType Directory -Path $externalLogDir | Out-Null
           }
         shell: powershell
+      - name: delete process
+        run: |
+          pm2 delete bun-test-app 2>$null
+        shell: powershell
 
       - uses: actions/checkout@v3
       
@@ -233,7 +237,7 @@ jobs:
           }
         shell: powershell
       - name: migrate sqlite if tag is migrate
-        if: contains(github.ref, 'migrate')
+        if: contains(github.event.pull_request.title, 'migrate') || contains(github.event.pull_request.body, 'migrate')
         run: |
           Write-Output "Running migration for SQLite database..."
           Write-Output "SQLite database found, running migrations..."
