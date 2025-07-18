@@ -2,7 +2,7 @@
 module.exports = {
     apps: [{
         name: 'bun-test-app',
-        script: 'dist/index.js',
+        script: 'dist/index.js',//確認要す
         interpreter: 'node', // @hono/node-serverと互換性の高いNode.jsを使用
         interpreter_args: [], // Node.jsの追加引数
         env: {
