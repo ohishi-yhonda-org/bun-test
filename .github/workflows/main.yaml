@@ -202,6 +202,15 @@ jobs:
           }
         shell: powershell 
 
+      - name: Fix libsql native module permissions
+        run: |
+          if (Test-Path "node_modules/@libsql/win32-x64-msvc/index.node") {
+            icacls "node_modules/@libsql/win32-x64-msvc/index.node" /grant Everyone:F /T
+          }
+          if (Test-Path "node_modules/@libsql/win32-x64-msvc") {
+            icacls "node_modules/@libsql/win32-x64/msvc" /grant Everyone:F /T
+          }
+        shell: powershell
       #pm2がインストールされているか確認
       - name: Verify pm2 installation
         run: |
