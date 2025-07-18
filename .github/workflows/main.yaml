@@ -18,7 +18,7 @@ jobs:
       DATABASE: ${{ secrets.DATABASE }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
-
+# test
       
       - name: Move PM2 logs to workspace-external directory
         run: |
