@@ -81,7 +81,7 @@ jobs:
           if ($env:BUN_AVAILABLE -eq "true") {
             Write-Output "Installing dependencies with Bun..."
             try {
-              bun install
+              npm install --verbose
               if ($LASTEXITCODE -ne 0) {
                 throw "Bun install failed with exit code $LASTEXITCODE"
               }
