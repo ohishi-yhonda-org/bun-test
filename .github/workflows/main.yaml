@@ -27,9 +27,75 @@ jobs:
             New-Item -ItemType Directory -Path $externalLogDir | Out-Null
           }
         shell: powershell
-      - name: delete process
+
+
+      - name: Verify pm2 installation
         run: |
-          pm2 delete bun-test-app 2>$null
+          try {
+            $pm2Version = pm2 --version 2>$null
+            if ($LASTEXITCODE -eq 0) {
+              Write-Output "✓ pm2 is available, version: $pm2Version"
+              Write-Output "Current PM2 processes:"
+              pm2 list
+              
+              # Bunインタープリターの確認
+              if ($env:BUN_AVAILABLE -eq "true") {
+                Write-Output "Testing Bun interpreter with PM2..."
+                $testScript = "console.log('Bun test successful')"
+                $testScript | Out-File -FilePath "test-bun.js" -Encoding utf8
+                pm2 start test-bun.js --name "bun-test" --interpreter bun
+                Start-Sleep -Seconds 3
+                pm2 logs bun-test --lines 5 --nostream
+                pm2 delete bun-test 2>$null
+                Remove-Item "test-bun.js" -Force -ErrorAction SilentlyContinue
+              }
+            } else {
+              throw "pm2 command failed"
+            }
+          } catch {
+            Write-Output "⚠️ pm2 not available or failed to execute: $_"
+          }
+        shell: powershell
+
+     
+      - name: check pm2 process and  delete if processing
+        run: |
+          # 既存のプロセスが存在するかチェック
+          $processExists = $false
+          try {
+            # 方法1: pm2 jlist でチェック
+            $processList = pm2 jlist | ConvertFrom-Json
+            $existingProcess = $processList | Where-Object { $_.name -eq "bun-test-app" }
+            if ($existingProcess) {
+              $processExists = $true
+              Write-Output "Existing process found via jlist. Current status: $($existingProcess.pm2_env.status)"
+            }
+          } catch {
+            Write-Output "Could not check processes via jlist, trying alternative method..."
+            
+            # 方法2: pm2 show でチェック
+            try {
+              pm2 show bun-test-app 2>$null
+              if ($LASTEXITCODE -eq 0) {
+                $processExists = $true
+                Write-Output "Existing process found via show command"
+              }
+            } catch {
+              Write-Output "No existing process found via show command"
+            }
+          }
+          
+          if ($processExists) {
+            Write-Output "Deleting existing process..."
+            pm2 delete bun-test-app 2>$null
+            if ($LASTEXITCODE -eq 0) {
+              Write-Output "✓ Existing process deleted successfully"
+            } else {
+              Write-Output "❌ Failed to delete existing process"
+            }
+          } else {
+            Write-Output "No existing process found"
+          }
         shell: powershell
 
       - uses: actions/checkout@v3
@@ -252,33 +318,6 @@ jobs:
         shell: powershell
 
       #pm2がインストールされているか確認
-      - name: Verify pm2 installation
-        run: |
-          try {
-            $pm2Version = pm2 --version 2>$null
-            if ($LASTEXITCODE -eq 0) {
-              Write-Output "✓ pm2 is available, version: $pm2Version"
-              Write-Output "Current PM2 processes:"
-              pm2 list
-              
-              # Bunインタープリターの確認
-              if ($env:BUN_AVAILABLE -eq "true") {
-                Write-Output "Testing Bun interpreter with PM2..."
-                $testScript = "console.log('Bun test successful')"
-                $testScript | Out-File -FilePath "test-bun.js" -Encoding utf8
-                pm2 start test-bun.js --name "bun-test" --interpreter bun
-                Start-Sleep -Seconds 3
-                pm2 logs bun-test --lines 5 --nostream
-                pm2 delete bun-test 2>$null
-                Remove-Item "test-bun.js" -Force -ErrorAction SilentlyContinue
-              }
-            } else {
-              throw "pm2 command failed"
-            }
-          } catch {
-            Write-Output "⚠️ pm2 not available or failed to execute: $_"
-          }
-        shell: powershell
       - name: Start application with pm2
         run: |
           # エラーハンドリングの改善
