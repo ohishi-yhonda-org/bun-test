@@ -88,9 +88,13 @@ jobs:
           if ($processExists) {
             Write-Output "Deleting existing process..."
             pm2 delete bun-test-app 2>$null
+            write-Output "Current PM2 processes after deletion:"
             pm2 save
+            write-Output "Current PM2 processes after save:"
+            pm2 jlist
+            # ここでpm2 jlistを実行して現在のプロセスリストを確認
             # 確認のためにログを出力
-            Write-Output "Current PM2 processes after deletion:"
+            Write-Output "Current PM2 processes after show list:"
             $exitCode = $LASTEXITCODE
             Write-Output "exited with code"
             if ($exitCode -eq 0) {
