@@ -320,8 +320,8 @@ jobs:
           Write-Output "Running migration for SQLite database..."
           Write-Output "SQLite database found, running migrations..."
           try {
-            bun run drizzle-kit generate
-            bun run drizzle-kit migrate --config=drizzle-prod.config.ts
+            bun drizzle-kit generate
+            bun drizzle-kit migrate --config=drizzle-prod.config.ts
           } catch {
             Write-Output "❌ Migration failed: $_"
             exit 1
