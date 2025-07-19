@@ -87,7 +87,7 @@ jobs:
           
           if ($processExists) {
             Write-Output "Deleting existing process..."
-            pm2 delete bun-test-app 2>$null
+            pm2 delete bun-test-app
             write-Output "Current PM2 processes after deletion:"
             pm2 save
             write-Output "Current PM2 processes after save:"
