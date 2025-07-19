@@ -3,13 +3,9 @@ import { OpenAPIHono } from '@hono/zod-openapi'
 import { serve } from '@hono/node-server'
 
 import { PrismaClient } from "../prisma/src/generated/prisma"; // TypeScriptの場合
-import { env, getRuntimeKey } from 'hono/adapter'
 import { swaggerUI } from '@hono/swagger-ui'
-import { createMiddleware } from 'hono/factory'
 
 // index.ts
-import { PrismaMssql } from '@prisma/adapter-mssql';
-import * as mssql from 'mssql';
 import { untenApi } from './unten';
 import { sqliteTestApi } from './sqliteTest';
 
