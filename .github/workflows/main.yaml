@@ -302,7 +302,6 @@ jobs:
           if ($env:GITHUB_REF -match 'migrate') {
 
             
-            icacls "c:\\sqlite\bun-test-app\sqlite.db" /grant Everyone:F
 
             Write-Output "Migration tag detected, proceeding with SQLite migration"
             Write-Output "BUN_AVAILABLE=$($env:BUN_AVAILABLE)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
@@ -318,7 +317,7 @@ jobs:
           Write-Output "SQLite database found, running migrations..."
           try {
             bun run drizzle-kit generate
-            bun run drizzle-kit migrate
+            bun run drizzle-kit migrate --config=drizzle-prod.config.ts
           } catch {
             Write-Output "❌ Migration failed: $_"
             exit 1
