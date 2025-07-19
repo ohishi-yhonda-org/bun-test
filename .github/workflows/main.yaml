@@ -328,6 +328,17 @@ jobs:
           }
           Write-Output "Migration completed successfully"
         shell: powershell
+      - name: set everyone permissions for sqlite
+        run: |
+          $sqlitePath = "${env:APPDATA}\..\sqlite.db"
+          if (Test-Path $sqlitePath) {
+            icacls $sqlitePath /grant Everyone:F /T
+            Write-Output "Permissions set for $sqlitePath"
+
+          } else {
+            Write-Output "Log directory $logDir does not exist, skipping permission setting"
+          }
+        shell: powershell
 
       #pm2がインストールされているか確認
       - name: Start application with pm2
