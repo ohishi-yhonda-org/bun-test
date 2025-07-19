@@ -41,7 +41,7 @@ type sqliteTestListUsers = z.infer<typeof sqliteTestListUsers>;
 
 export const sqliteTestAddHandler: RouteHandler<typeof sqliteTestAddRoute, ENV> = async (c) => {
     const client = createClient({
-        url: "file:sqlite.db"
+        url: process.env.NODE_ENV === "dev" ? "file:sqlite.db" : "file:..\\sqlite.db"
     });
     const db = drizzle(client);
     const userData = await c.req.json<sqliteTestListUsers>();

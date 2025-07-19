@@ -32,8 +32,9 @@ export const sqliteTestListRoute = createRoute({
 
 export const sqliteTestListHandler: RouteHandler<typeof sqliteTestListRoute, ENV> = async (c) => {
     const client = createClient({
-        url: "file:sqlite.db"
+        url: process.env.NODE_ENV === "dev" ? "file:sqlite.db" : "file:..\\sqlite.db"
     });
+    console.log('SQLite Test List Handler');
     const db = drizzle(client);
     try {
         const result = await db.select().from(users).all();

@@ -295,7 +295,9 @@ jobs:
       - name: Check for SQLite migration tag
         run: |
           if ($env:GITHUB_REF -match 'migrate') {
-            icacls "${{ github.workspace }}\sqlite.db" /grant Everyone:F
+
+            
+            icacls "c:\\sqlite\bun-test-app\sqlite.db" /grant Everyone:F
 
             Write-Output "Migration tag detected, proceeding with SQLite migration"
             Write-Output "BUN_AVAILABLE=$($env:BUN_AVAILABLE)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
