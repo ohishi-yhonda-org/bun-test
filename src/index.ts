@@ -27,6 +27,9 @@ export type ENV = {
     PrismaClient: PrismaClient;
   }
 }
+
+console.log('ENV:', process.env.NODE_ENV);
+
 const app = new OpenAPIHono<ENV>()
 
 // スキーマを明示的に参照してOpenAPIのcomponentsに含める
