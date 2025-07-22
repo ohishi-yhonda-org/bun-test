@@ -3,7 +3,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
-    "build": "bun build src/index.ts --outdir=dist --target=node --format=esm",
+    "build": "bun build src/index.ts --outdir=dist --target=node --format=esm  --minify=false",
     "build:bun": "bun build src/index.ts --outdir=dist --target=bun",
     "start": "node dist/index.js",
     "start:bun": "bun run dist/index.js",
