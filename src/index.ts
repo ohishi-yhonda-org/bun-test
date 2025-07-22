@@ -71,7 +71,7 @@ const auth = basicAuth({
     return isValid;
   }
 });
-app.use("/doc/*", auth)
+// app.use("/doc/*", auth)
 // app.post("*", auth)
 app.delete("*", auth)
 

@@ -6,6 +6,7 @@ import { drizzle } from "drizzle-orm/libsql";
 import { users } from "../db/schema";
 import { handleSqliteError } from "../utils/sqliteErrorHandler";
 import { printDocument } from "../print";
+import { File } from "buffer";
 export const sqliteTestPrintRoute = createRoute({
     method: "post",
     path: "/print",
@@ -16,6 +17,8 @@ export const sqliteTestPrintRoute = createRoute({
                 "form-data": {
                     schema: z.object({
                         document: z.instanceof(Buffer).describe("The document to print in binary format")
+                    }).openapi("pdffile", {
+                        description: "The document to print in binary format",
                     }),
                 }
             }
@@ -60,6 +63,8 @@ export const sqliteTestPrintHandler: RouteHandler<typeof sqliteTestPrintRoute, E
     const fileBuffer = await document.arrayBuffer();
     const originalname = document.name;
     const mimetype = document.type;
+
+    console.log(`Received file: ${originalname}, MIME type: ${mimetype} ,file size: ${fileBuffer.byteLength} bytes`);
     try {
         // ここでプリント処理を呼び出す
         const printResult = await printDocument(Buffer.from(fileBuffer), originalname, mimetype);
