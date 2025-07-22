@@ -1,9 +1,10 @@
-import { createRoute, RouteHandler } from "@hono/zod-openapi";
-import { sqliteTestListUsersArray, ErrorResponseSchema } from "../openApi/schema";
+import { createRoute, RouteHandler, z } from "@hono/zod-openapi";
+import { sqliteTestListUsersWOPasswordArraySchema, sqliteTestListUsersWOPasswordSchema, ErrorResponseSchema } from "../openApi/schema";
 import { ENV } from "..";
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import { users } from "../db/schema";
+import { keyof } from "zod";
 
 export const sqliteTestListRoute = createRoute({
 
@@ -14,7 +15,7 @@ export const sqliteTestListRoute = createRoute({
             description: "SQLite Test List",
             content: {
                 "application/json": {
-                    schema: sqliteTestListUsersArray,
+                    schema: sqliteTestListUsersWOPasswordArraySchema,
                 },
             },
         },
@@ -30,6 +31,8 @@ export const sqliteTestListRoute = createRoute({
     }
 })
 
+type sqliteTestListUsersWOPasswordArraySchema = z.infer<typeof sqliteTestListUsersWOPasswordArraySchema>;
+
 export const sqliteTestListHandler: RouteHandler<typeof sqliteTestListRoute, ENV> = async (c) => {
     const client = createClient({
         url: process.env.NODE_ENV === "dev" ? "file:sqlite.db" : "file:..\\sqlite.db"
@@ -38,7 +41,9 @@ export const sqliteTestListHandler: RouteHandler<typeof sqliteTestListRoute, ENV
     const db = drizzle(client);
     try {
         const result = await db.select().from(users).all();
-        return c.json(result, 200);
+        const parsedResult = sqliteTestListUsersWOPasswordArraySchema.parse(result);
+        return c.json(parsedResult, 200);
+        // return c.json(result, 200);
     } catch (error) {
         return c.json({ error: 'Internal Server Error' }, 500);
     }

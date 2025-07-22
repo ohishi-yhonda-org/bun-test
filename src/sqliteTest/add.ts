@@ -5,7 +5,6 @@ import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import { users } from "../db/schema";
 import { handleSqliteError } from "../utils/sqliteErrorHandler";
-import bcrypt from 'bcrypt'; // bcryptをインポート
 
 export const sqliteTestAddRoute = createRoute({
     method: "post",
@@ -65,7 +64,9 @@ export const sqliteTestAddHandler: RouteHandler<typeof sqliteTestAddRoute, ENV> 
     const db = drizzle(client);
     try {
         const userData = await c.req.json<sqliteTestListUsersAddSchema>();
-
+        const bcrypt = await import('bcryptjs');
+        // パスワードをハッシュ化
+        userData.password = await bcrypt.hash(userData.password, 10);
         const parsedData = sqliteTestListUsersAddSchema.parse(userData);
         await db.insert(users).values(parsedData);
         return c.json({}, 200);

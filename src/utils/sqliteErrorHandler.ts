@@ -18,14 +18,7 @@ import { ZodError } from "zod";
  */
 export function handleSqliteError(error: any, c: Context) {
     // Zodバリデーションエラー対応
-    if (error instanceof ZodError) {
-        console.error('Zod validation error:', error);
-        return c.json({
-            success: false,
-            error: 'Validation Error',
-            details: error.issues
-        }, 400);
-    }
+
 
     console.error('Error adding user:');
 
