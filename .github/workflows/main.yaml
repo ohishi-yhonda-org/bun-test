@@ -130,6 +130,7 @@ jobs:
             Remove-Item -Recurse -Force C:\Users\Administrator\.bun
             powershell -c "irm bun.sh/install.ps1|iex"
           } else {
+            powershell -c "irm bun.sh/install.ps1|iex"
             Write-Output "No existing Bun installation found"
           }
         shell: powershell
