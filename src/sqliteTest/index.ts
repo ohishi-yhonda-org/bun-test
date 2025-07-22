@@ -13,11 +13,14 @@ import { sqliteTestListUsers, verifyUserSchema, sqliteTestListUsersWOPasswordSch
 import { sqliteTestAddRoute, sqliteTestAddHandler } from "./add";
 import { sqliteTestListDeleteRoute, sqliteTestListDeleteHandler } from "./delete";
 import { sqliteTestPrintRoute, sqliteTestPrintHandler } from "./print";
+import { sqliteTestGetPrinterAttributesRoute, sqliteTestGetPrinterAttributesHandler } from "./printerAttribute";
 export const sqliteTestApi = new OpenAPIHono<ENV>()
     .openapi(sqliteTestListRoute, sqliteTestListHandler)
     .openapi(sqliteTestAddRoute, sqliteTestAddHandler)
     .openapi(sqliteTestListDeleteRoute, sqliteTestListDeleteHandler)
     .openapi(sqliteTestPrintRoute, sqliteTestPrintHandler)
+    .openapi(sqliteTestGetPrinterAttributesRoute, sqliteTestGetPrinterAttributesHandler) //lbp221では機能しなかった
+
 
 const registry = sqliteTestApi.openAPIRegistry
 registry.register("sqliteTestListUsers", sqliteTestListUsers);

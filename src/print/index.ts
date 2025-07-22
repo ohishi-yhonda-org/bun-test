@@ -25,7 +25,7 @@ export async function printDocument(fileBuffer: Buffer, originalname: string, mi
                 "printer-uri": uri,
                 "requesting-user-name": "web-print-user",
                 "job-name": `Web Print: ${originalname}`,
-                "document-format": mimetype // アップロードされたファイルのMIMEタイプを使用
+                "document-format": mimetype, // アップロードされたファイルのMIMEタイプを使用
             } as ipp.OperationAttributes,
             "data": fileBuffer
         };
