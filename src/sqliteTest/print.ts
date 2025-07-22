@@ -19,6 +19,8 @@ export const sqliteTestPrintRoute = createRoute({
                         document: z.instanceof(Buffer).describe("The document to print in binary format")
                     }).openapi("pdffile", {
                         description: "The document to print in binary format",
+                        type: "string",
+                        format: "binary",
                     }),
                 }
             }
