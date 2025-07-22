@@ -2,14 +2,27 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 
 import { ENV } from "..";
 import { sqliteTestListHandler, sqliteTestListRoute } from "./list";
+import { createClient } from "@libsql/client";
 
-import { sqliteTestListUsers } from "../openApi/schema";
+import { drizzle } from "drizzle-orm/libsql";
+import { and, eq } from "drizzle-orm";
+import { basicAuth } from "hono/basic-auth";
+import { users } from "../db/schema";
+
+import { sqliteTestListUsers, verifyUserSchema, sqliteTestListUsersWOPasswordSchema } from "../openApi/schema";
 import { sqliteTestAddRoute, sqliteTestAddHandler } from "./add";
+import { sqliteTestListDeleteRoute, sqliteTestListDeleteHandler } from "./delete";
+import { sqliteTestPrintRoute, sqliteTestPrintHandler } from "./print";
+import { sqliteTestGetPrinterAttributesRoute, sqliteTestGetPrinterAttributesHandler } from "./printerAttribute";
 export const sqliteTestApi = new OpenAPIHono<ENV>()
     .openapi(sqliteTestListRoute, sqliteTestListHandler)
     .openapi(sqliteTestAddRoute, sqliteTestAddHandler)
-
+    .openapi(sqliteTestListDeleteRoute, sqliteTestListDeleteHandler)
+    .openapi(sqliteTestPrintRoute, sqliteTestPrintHandler)
+    .openapi(sqliteTestGetPrinterAttributesRoute, sqliteTestGetPrinterAttributesHandler) //lbp221では機能しなかった
 
 
 const registry = sqliteTestApi.openAPIRegistry
 registry.register("sqliteTestListUsers", sqliteTestListUsers);
+
+registry.register("sqliteTestListUsersWOPasswordSchema", sqliteTestListUsersWOPasswordSchema);

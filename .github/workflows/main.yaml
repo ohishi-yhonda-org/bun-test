@@ -399,7 +399,7 @@ jobs:
                   Write-Output "✓ Application restarted successfully with pm2"
                 } else {
                   Write-Output "❌ Restart failed, performing fresh start..."
-                  pm2 delete bun-test-app 2>$null
+                  pm2 delete bun-test-app 
                   # ecosystem.config.cjsを使用してBunインタープリターで起動
                   Write-Output "Starting with ecosystem.config.cjs configuration..."
                   pm2 start ecosystem.config.cjs

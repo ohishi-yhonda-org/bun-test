@@ -1,6 +1,8 @@
 import { z } from "@hono/zod-openapi"
-import { sha } from "bun";
+import { password, sha } from "bun";
 import id from "zod/v4/locales/id.cjs";
+import bcrypt from 'bcryptjs'; // bcryptをインポート
+
 
 // 今日の日付をISO形式で取得する関数（UTC時間で00:00:00）
 const getTodayISO = () => {
@@ -199,6 +201,7 @@ export const UntenDetailParamsSchema = z.object({
     type: 'object',
     description: 'パラメータスキーマ'
 });
+
 export const sqliteTestListUsers = z.object({
     id: z.number().openapi({
         example: 1
@@ -209,9 +212,10 @@ export const sqliteTestListUsers = z.object({
     email: z.string().openapi({
         example: "john.doe@example.com"
     }),
-    age: z.number().openapi({
+    age: z.number().nullable().optional().openapi({
         example: 30
-    }).nullable()
+    }),
+
 }).openapi("sqliteTestListUsers", {
     type: "object",
     description: "SQLite Test List Users",
@@ -232,9 +236,106 @@ export const sqliteTestListUsers = z.object({
             type: "number",
             example: 30,
             nullable: true
+        },
+
+    }
+});
+
+export const sqliteTestListUsersWOPasswordSchema = z.object({
+    id: z.number().openapi({
+        example: 1
+    }),
+    name: z.string().openapi({
+        example: "John Doe"
+    }),
+    email: z.string().openapi({
+        example: "john.doe@example.com"
+    }),
+    age: z.number().nullable().optional().openapi({
+        example: 30
+    }),
+}).openapi("sqliteTestListUsersWOPasswordSchema", {
+    type: "object",
+    description: "SQLite Test List Users Without Password",
+    properties: {
+        id: {
+            type: "number",
+            example: 1
+        },
+        name: {
+            type: "string",
+            example: "John Doe"
+        },
+        email: {
+            type: "string",
+            example: "john.doe@example.com"
+        },
+        age: {
+            type: "number",
+            example: 30,
+            nullable: true
+        },
+
+    }
+
+})
+
+export const sqliteTestListUsersWOPasswordArraySchema = z.array(sqliteTestListUsersWOPasswordSchema).openapi("sqliteTestListUsersWOPasswordArraySchema", {
+    type: "array",
+    description: "SQLite Test List Users Without Password Array Schema",
+    items: {
+        $ref: "#/components/schemas/sqliteTestListUsersWOPasswordSchema"
+    }
+});
+
+export const verifyUserSchema = z.object({
+    email: z.string(),
+    password: z.string()
+}).openapi("verifyUserSchema", {
+    type: "object",
+    description: "Verify User Schema",
+    properties: {
+        email: {
+            type: "string",
+            example: "john.doe@example.com"
+        },
+        password: {
+            type: "string",
+            example: "password123"
         }
     }
 });
+
+export const sqliteTestListUsersAddSchema = z.object({
+    name: sqliteTestListUsers.shape.name,
+    email: sqliteTestListUsers.shape.email,
+    age: sqliteTestListUsers.shape.age,
+    password: z.string()
+
+}).openapi("sqliteTestListUsersAddSchema", {
+    type: "object",
+    description: "SQLite Test List Users Add Schema",
+    properties: {
+        name: {
+            type: "string",
+            example: "John Doe"
+        },
+        email: {
+            type: "string",
+            example: "john.doe@example.com"
+        },
+        age: {
+            type: "number",
+            example: 30,
+            nullable: true
+        },
+        password: {
+            type: "string",
+            example: "password123"
+        }
+    }
+});
+
 export const sqliteTestListUsersArray = z.array(sqliteTestListUsers).openapi("sqliteTestListUsersArray", {
     type: "array",
     description: "SQLite Test List Users Array",

@@ -3,13 +3,14 @@ import { OpenAPIHono } from '@hono/zod-openapi'
 import { serve } from '@hono/node-server'
 
 import { PrismaClient } from "../prisma/src/generated/prisma"; // TypeScriptの場合
-import { env, getRuntimeKey } from 'hono/adapter'
 import { swaggerUI } from '@hono/swagger-ui'
-import { createMiddleware } from 'hono/factory'
-
+import { createClient } from '@libsql/client';
+import { drizzle } from 'drizzle-orm/libsql';
+import { basicAuth } from 'hono/basic-auth';
+import { verifyUserSchema } from './openApi/schema';
+import { eq } from 'drizzle-orm';
+import { users } from './db/schema';
 // index.ts
-import { PrismaMssql } from '@prisma/adapter-mssql';
-import * as mssql from 'mssql';
 import { untenApi } from './unten';
 import { sqliteTestApi } from './sqliteTest';
 
@@ -35,6 +36,44 @@ const app = new OpenAPIHono<ENV>()
 // スキーマを明示的に参照してOpenAPIのcomponentsに含める
 // この行は実行されないが、TypeScriptの型チェック時にスキーマが認識される
 
+app.openAPIRegistry.registerComponent("securitySchemes", "sakuraBasicAuth", {
+
+  type: "http",
+  scheme: "basic",
+  description: "Basic authentication for SQLite Test API",
+  in: "header",
+  name: "Authorization",
+})
+
+
+const auth = basicAuth({
+  verifyUser: async (username, password, c) => {
+    const client = createClient({
+      url: process.env.NODE_ENV === "dev" ? "file:sqlite.db" : "file:..\\sqlite.db"
+    });
+    const db = drizzle(client);
+    console.log('SQLite Test Basic Auth Handler');
+    const userVerify = await verifyUserSchema.parse({ email: username, password });
+    // emailでユーザーを検索
+    const user = await db.select().from(users).where(eq(users.email, userVerify.email)).then(r => r[0]);
+    if (!user) {
+      // DBが空ならデフォルト認証許可
+      const count = await db.$count(users);
+      if (count === 0) {
+        return username === "admin" && password === "password";
+      } else {
+        return false;
+      }
+    }
+    // bcryptでパスワード照合
+    const bcrypt = await import('bcryptjs');
+    const isValid = await bcrypt.compare(userVerify.password, user.password);
+    return isValid;
+  }
+});
+app.use("/doc/*", auth)
+// app.post("*", auth)
+app.delete("*", auth)
 
 
 app.route('/unten', untenApi)
@@ -45,7 +84,15 @@ app.route('/unten', untenApi)
       version: '1.0.0',
       title: 'My API',
     },
-  }).get('/doc', swaggerUI({ url: '/specification' }))
+  })
+  // .use('/doc/*', async (c, next) => {
+  //   const auth = basicAuth({
+  //     username: 'user', // 本来は環境変数等でちゃんと値を設定
+  //     password: 'pass', // 今回は固定
+  //   });
+  //   return auth(c, next);
+  // })
+  .get('/doc', swaggerUI({ url: '/specification' }))
 
 // ヘルスチェック用のルート
 app.get('/', (c) => {
