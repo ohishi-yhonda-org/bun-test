@@ -123,6 +123,15 @@ jobs:
       - name: list files
         run: Get-ChildItem
         shell: powershell
+      - name: remove bun
+        run: |
+          if (Test-Path "C:\Users\Administrator\.bun") {
+            Write-Output "Removing existing Bun installation..."
+            Remove-Item -Recurse -Force C:\Users\Administrator\.bun
+          } else {
+            Write-Output "No existing Bun installation found"
+          }
+        shell: powershell
         
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
