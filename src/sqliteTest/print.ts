@@ -141,7 +141,7 @@ export const sqliteTestPrintHandler: RouteHandler<typeof sqliteTestPrintRoute, E
         //     // 成功時の処理（クライアントへの通知など）
         // });
         try {
-            const { stdout, stderr } = await execPromise(commandPrint);
+            const { stdout, stderr } = await execPromise(commandPrint, { timeout: 120000 });
 
             if (stdout) {
                 console.log('--- STDOUT ---');
