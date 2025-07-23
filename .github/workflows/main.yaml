@@ -414,6 +414,7 @@ jobs:
                   # ecosystem.config.cjsを使用してBunインタープリターで起動
                   Write-Output "Starting with ecosystem.config.cjs configuration..."
                   pm2 start ecosystem.config.cjs
+                  pm2 save
                 }
               }
             } else {
@@ -421,6 +422,7 @@ jobs:
               # ecosystem.config.cjsを使用して一貫した設定で起動
               Write-Output "Starting with ecosystem.config.cjs configuration..."
               pm2 start ecosystem.config.cjs
+              pm2 save
             }
             
             # 最終状態確認
