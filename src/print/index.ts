@@ -26,7 +26,11 @@ export async function printDocument(fileBuffer: Buffer, originalname: string, mi
                 "requesting-user-name": "web-print-user",
                 "job-name": `Web Print: ${originalname}`,
                 "document-format": mimetype, // アップロードされたファイルのMIMEタイプを使用
+                // "media": "Custom.516x363pt"
             } as ipp.OperationAttributes,
+            "job-attributes-tag": {
+                // "media-source": "manual-feed-tray", // 自動給紙トレイを指定
+            },
             "data": fileBuffer
         };
 
