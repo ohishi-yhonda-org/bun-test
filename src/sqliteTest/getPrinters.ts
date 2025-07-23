@@ -60,6 +60,8 @@ export const sqliteTestGetPrinterHandler: RouteHandler<typeof sqliteTestGetPrint
         // ここでプリンターにファイルを送信する処理を追加
         // 例えば、printDocument関数を呼び出すなど
         os.platform() === 'win32' ? console.log('Windows環境です') : console.log('Windows以外の環境です');
+        const userName = process.env.USERNAME || process.env.USERPROFILE || 'Unknown User (Windows)';
+
         let printers: string[] = [];
         if (os.platform() === 'win32') {
             //printer一覧をutf-8にて取得
@@ -93,7 +95,7 @@ export const sqliteTestGetPrinterHandler: RouteHandler<typeof sqliteTestGetPrint
         }
 
         // NullResponseSchema expects { message?: string }
-        return c.json({ printers: printers }, 200);
+        return c.json({ printers: printers, userName: userName }, 200);
         // return c.json({ message: "Printer information retrieved successfully", data: fileBuffer }, 200);
     } catch (error) {
         console.error("Error retrieving printer information:", error);
