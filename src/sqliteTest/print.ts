@@ -67,6 +67,25 @@ export const sqliteTestPrintHandler: RouteHandler<typeof sqliteTestPrintRoute, E
         console.log('Submitting print job');
         const fileContent = await c.req.parseBody();
 
+        // PDFファイルの存在と読み取り権限
+        try {
+            await fs.promises.access(filepath, fs.constants.R_OK);
+            console.log(`[${new Date().toISOString()}] PDF file exists and is readable: ${filepath}`);
+        } catch (err: any) {
+            console.error(`[${new Date().toISOString()}] Error accessing PDF file: ${filepath}`, err.message);
+        }
+        const adobePath = ADOBE_ACROBAT_PATH?.toString() || "C:\\Program Files\\Adobe\\Acrobat DC\\Acrobat\\Acrobat.exe";
+
+        // Acrobat.exeの存在と実行（読み取り）権限
+        // WindowsではR_OKで実行可能とみなされることが多い
+        try {
+            await fs.promises.access(adobePath, fs.constants.R_OK);
+            console.log(`[${new Date().toISOString()}] Acrobat.exe exists and is accessible: ${adobePath}`);
+        } catch (err: any) {
+            console.error(`[${new Date().toISOString()}] Error accessing Acrobat.exe: ${adobePath}`, err.message);
+        }
+
+
         if (!fileContent || !fileContent.document) {
             return c.json({ error: "No document provided" }, 500);
         }
@@ -84,7 +103,6 @@ export const sqliteTestPrintHandler: RouteHandler<typeof sqliteTestPrintRoute, E
         const currentPath = process.cwd();
 
         console.log('Current Directory:', currentPath);
-        const adobePath = ADOBE_ACROBAT_PATH?.toString() || "C:\\Program Files\\Adobe\\Acrobat DC\\Acrobat\\Acrobat.exe";
         const commandPrint = `"${adobePath}" /t "${currentPath}\\${filepath}" "${printerName}"`;
         console.log('Print Command:', commandPrint);
 
