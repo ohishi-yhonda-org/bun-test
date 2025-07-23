@@ -3,6 +3,8 @@ import { NullResponseSchema, ErrorResponseSchema } from "../openApi/schema";
 import { ENV } from "..";
 import { handleSqliteError } from "../utils/sqliteErrorHandler";
 import { exec } from 'child_process'; // exec をインポート
+import { Context } from "hono";
+import { spawn } from "child_process"; // spawn をインポート
 
 import { promisify } from 'util';
 
@@ -59,7 +61,80 @@ export const sqliteTestPrintRoute = createRoute({
         },
     },
 });
-const ADOBE_ACROBAT_PATH = process.env.ADOBE_ACROBAT_PATH;
+// const ADOBE_ACROBAT_PATH = process.env.ADOBE_ACROBAT_PATH;
+
+
+
+// Adobe Acrobat のパスとPDFファイルパス、プリンター名は実際の値に置き換えてください
+const ADOBE_ACROBAT_PATH = "C:\\Program Files\\Adobe\\Acrobat DC\\Acrobat\\Acrobat.exe";
+const PDF_FILE_PATH = "C:\\actions-runner\\_work\\bun-test\\bun-test\\ryohi.pdf";
+const PRINTER_NAME = "LBP221-ryohi";
+
+// コマンドと引数を分割
+const command = ADOBE_ACROBAT_PATH;
+const args = ["/t", PDF_FILE_PATH, PRINTER_NAME];
+
+async function executePrintCommandWithSpawn(c: Context) {
+    console.log(`[${new Date().toISOString()}] Attempting to execute command with spawn: ${command} ${args.join(' ')}`);
+
+    return new Promise<void>((resolve, reject) => {
+        // オプションとして、Windows上でのみ隠しウィンドウで実行するためのオプション
+        // detached: true と stdio: 'ignore' を組み合わせると、親プロセスから独立し、標準入出力を無視
+        // これにより、サービスのデッドロックを防ぐ可能性も
+        const child = spawn(command, args, {
+            // detached: true, // プロセスを独立させる（親プロセスが終了しても子プロセスは生き残る）
+            // stdio: 'ignore', // 標準入出力ストリームを無視
+            timeout: 120000 // タイムアウトを設定 (ミリ秒)
+        });
+
+        let stdoutBuffer = '';
+        let stderrBuffer = '';
+
+        child.stdout.on('data', (data) => {
+            stdoutBuffer += data.toString();
+            console.log(`[${new Date().toISOString()}] STDOUT from Acrobat: ${data.toString()}`);
+        });
+
+        child.stderr.on('data', (data) => {
+            stderrBuffer += data.toString();
+            console.error(`[${new Date().toISOString()}] STDERR from Acrobat: ${data.toString()}`);
+        });
+
+        child.on('error', (err) => {
+            // プロセス自体が起動できなかった場合のエラー
+            console.error(`[${new Date().toISOString()}] SPAWN ERROR: Failed to start child process - ${err.message}`);
+            reject(new Error(`Failed to start print process: ${err.message}`));
+        });
+
+        child.on('close', (code) => {
+            // プロセスが終了した
+            console.log(`[${new Date().toISOString()}] Child process closed with code: ${code}`);
+            if (stdoutBuffer) {
+                console.log(`[${new Date().toISOString()}] Full STDOUT buffer:\n${stdoutBuffer}`);
+            }
+            if (stderrBuffer) {
+                console.error(`[${new Date().toISOString()}] Full STDERR buffer:\n${stderrBuffer}`);
+            }
+
+            if (code === 0) {
+                console.log(`[${new Date().toISOString()}] Print command executed successfully.`);
+                resolve();
+            } else {
+                // エラーコードで終了した場合
+                console.error(`[${new Date().toISOString()}] Print command failed with exit code ${code}.`);
+                reject(new Error(`Print command failed with exit code ${code}. STDERR: ${stderrBuffer || 'No stderr output.'}`));
+            }
+        });
+
+        child.on('timeout', () => {
+            // タイムアウトした
+            console.error(`[${new Date().toISOString()}] Child process timed out after 120000ms.`);
+            child.kill(); // 強制終了
+            reject(new Error(`Print process timed out.`));
+        });
+    });
+}
+
 
 export const sqliteTestPrintHandler: RouteHandler<typeof sqliteTestPrintRoute, ENV> = async (c) => {
     try {
@@ -140,35 +215,36 @@ export const sqliteTestPrintHandler: RouteHandler<typeof sqliteTestPrintRoute, E
         //     console.log('Printer command stdout:', stdout);
         //     // 成功時の処理（クライアントへの通知など）
         // });
-        try {
-            const { stdout, stderr } = await execPromise(commandPrint, { timeout: 120000 });
+        await executePrintCommandWithSpawn(c)
+        // try {
+        //     const { stdout, stderr } = await execPromise(commandPrint, { timeout: 120000 });
 
-            if (stdout) {
-                console.log('--- STDOUT ---');
-                console.log(stdout);
-                console.log('--------------');
-            }
+        //     if (stdout) {
+        //         console.log('--- STDOUT ---');
+        //         console.log(stdout);
+        //         console.log('--------------');
+        //     }
 
-            if (stderr) {
-                console.error('--- STDERR ---');
-                console.error(stderr);
-                console.error('--------------');
-            }
-            console.log('Print command finished. Check printer queue and event logs for status.');
+        //     if (stderr) {
+        //         console.error('--- STDERR ---');
+        //         console.error(stderr);
+        //         console.error('--------------');
+        //     }
+        //     console.log('Print command finished. Check printer queue and event logs for status.');
 
-        } catch (error: any) {
+        // } catch (error: any) {
 
-            console.error('--- PRINT COMMAND FAILED (CATCH BLOCK) ---');
-            console.error(`Error message: ${error.message}`);
-            console.error(`Error code: ${error.code}`); // コマンドの終了コード
-            if (error.stdout) {
-                console.error('STDOUT (from error object):', error.stdout);
-            }
-            if (error.stderr) {
-                console.error('STDERR (from error object):', error.stderr); // エラーオブジェクト内のstderr
-            }
-            console.error('------------------------------------------');
-        }
+        //     console.error('--- PRINT COMMAND FAILED (CATCH BLOCK) ---');
+        //     console.error(`Error message: ${error.message}`);
+        //     console.error(`Error code: ${error.code}`); // コマンドの終了コード
+        //     if (error.stdout) {
+        //         console.error('STDOUT (from error object):', error.stdout);
+        //     }
+        //     if (error.stderr) {
+        //         console.error('STDERR (from error object):', error.stderr); // エラーオブジェクト内のstderr
+        //     }
+        //     console.error('------------------------------------------');
+        // }
         // console.log
 
         console.log(`Print job submitted for file: ${filepath}`);
