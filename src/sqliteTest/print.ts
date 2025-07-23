@@ -4,6 +4,10 @@ import { ENV } from "..";
 import { handleSqliteError } from "../utils/sqliteErrorHandler";
 import { exec } from 'child_process'; // exec をインポート
 
+import { promisify } from 'util';
+
+const execPromise = promisify(exec);
+
 export const sqliteTestPrintRoute = createRoute({
     method: "post",
     path: "/print",
@@ -117,23 +121,54 @@ export const sqliteTestPrintHandler: RouteHandler<typeof sqliteTestPrintRoute, E
         //             return c.json({ error: `Failed to print: ${printError.message}` }, 500);
         //         }
         //     }))
-        exec(commandPrint, (error, stdout, stderr) => {
-            if (error) {
-                console.error('Error sending file to printer:', error.message);
-                // エラー応答は Hono の Context を使って返す
-                // 非同期なので、ここで直接return c.json()とはできないため、
-                // 適切なエラーハンドリングまたは通知メカニズムを考慮する必要がある
-                // 例: ログに記録し、クライアントにはすぐにOKを返しておくか、
-                // 後でWebsocket等で結果を通知する
-                return; // ここで早期リターン
+        // exec(commandPrint, (error, stdout, stderr) => {
+
+
+        //     if (error) {
+        //         console.error('Error sending file to printer:', error.message);
+        //         // エラー応答は Hono の Context を使って返す
+        //         // 非同期なので、ここで直接return c.json()とはできないため、
+        //         // 適切なエラーハンドリングまたは通知メカニズムを考慮する必要がある
+        //         // 例: ログに記録し、クライアントにはすぐにOKを返しておくか、
+        //         // 後でWebsocket等で結果を通知する
+        //         return; // ここで早期リターン
+        //     }
+        //     if (stderr) {
+        //         console.warn('Printer command stderr:', stderr);
+        //     }
+        //     console.log('File sent to printer successfully.');
+        //     console.log('Printer command stdout:', stdout);
+        //     // 成功時の処理（クライアントへの通知など）
+        // });
+        try {
+            const { stdout, stderr } = await execPromise(commandPrint);
+
+            if (stdout) {
+                console.log('--- STDOUT ---');
+                console.log(stdout);
+                console.log('--------------');
             }
+
             if (stderr) {
-                console.warn('Printer command stderr:', stderr);
+                console.error('--- STDERR ---');
+                console.error(stderr);
+                console.error('--------------');
             }
-            console.log('File sent to printer successfully.');
-            console.log('Printer command stdout:', stdout);
-            // 成功時の処理（クライアントへの通知など）
-        });
+            console.log('Print command finished. Check printer queue and event logs for status.');
+
+        } catch (error: any) {
+
+            console.error('--- PRINT COMMAND FAILED (CATCH BLOCK) ---');
+            console.error(`Error message: ${error.message}`);
+            console.error(`Error code: ${error.code}`); // コマンドの終了コード
+            if (error.stdout) {
+                console.error('STDOUT (from error object):', error.stdout);
+            }
+            if (error.stderr) {
+                console.error('STDERR (from error object):', error.stderr); // エラーオブジェクト内のstderr
+            }
+            console.error('------------------------------------------');
+        }
         // console.log
 
         console.log(`Print job submitted for file: ${filepath}`);
