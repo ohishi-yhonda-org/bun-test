@@ -196,26 +196,26 @@ export const sqliteTestPrintHandler: RouteHandler<typeof sqliteTestPrintRoute, E
         //             return c.json({ error: `Failed to print: ${printError.message}` }, 500);
         //         }
         //     }))
-        // exec(commandPrint, (error, stdout, stderr) => {
+        exec(commandPrint, (error, stdout, stderr) => {
 
 
-        //     if (error) {
-        //         console.error('Error sending file to printer:', error.message);
-        //         // エラー応答は Hono の Context を使って返す
-        //         // 非同期なので、ここで直接return c.json()とはできないため、
-        //         // 適切なエラーハンドリングまたは通知メカニズムを考慮する必要がある
-        //         // 例: ログに記録し、クライアントにはすぐにOKを返しておくか、
-        //         // 後でWebsocket等で結果を通知する
-        //         return; // ここで早期リターン
-        //     }
-        //     if (stderr) {
-        //         console.warn('Printer command stderr:', stderr);
-        //     }
-        //     console.log('File sent to printer successfully.');
-        //     console.log('Printer command stdout:', stdout);
-        //     // 成功時の処理（クライアントへの通知など）
-        // });
-        await executePrintCommandWithSpawn(c)
+            if (error) {
+                console.error('Error sending file to printer:', error.message);
+                // エラー応答は Hono の Context を使って返す
+                // 非同期なので、ここで直接return c.json()とはできないため、
+                // 適切なエラーハンドリングまたは通知メカニズムを考慮する必要がある
+                // 例: ログに記録し、クライアントにはすぐにOKを返しておくか、
+                // 後でWebsocket等で結果を通知する
+                return; // ここで早期リターン
+            }
+            if (stderr) {
+                console.warn('Printer command stderr:', stderr);
+            }
+            console.log('File sent to printer successfully.');
+            console.log('Printer command stdout:', stdout);
+            // 成功時の処理（クライアントへの通知など）
+        });
+        // await executePrintCommandWithSpawn(c)
         // try {
         //     const { stdout, stderr } = await execPromise(commandPrint, { timeout: 120000 });
 
