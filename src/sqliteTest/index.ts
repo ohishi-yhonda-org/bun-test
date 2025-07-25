@@ -13,6 +13,7 @@ import { sqliteTestListUsers, verifyUserSchema, sqliteTestListUsersWOPasswordSch
 import { sqliteTestAddRoute, sqliteTestAddHandler } from "./add";
 import { sqliteTestListDeleteRoute, sqliteTestListDeleteHandler } from "./delete";
 import { sqliteTestGetPrinterRoute, sqliteTestGetPrinterHandler } from "./getPrinters";
+import { sqliteTestGetCurrentFolderRoute, sqliteTestGetCurrentFolderHandler } from "./getCurrentFolder";
 import { sqliteTestPrintRoute, sqliteTestPrintHandler } from "./print";
 // import { sqliteTestGetPrinterAttributesRoute, sqliteTestGetPrinterAttributesHandler } from "./printerAttribute";
 export const sqliteTestApi = new OpenAPIHono<ENV>()
@@ -21,6 +22,8 @@ export const sqliteTestApi = new OpenAPIHono<ENV>()
     .openapi(sqliteTestListDeleteRoute, sqliteTestListDeleteHandler)
     .openapi(sqliteTestGetPrinterRoute, sqliteTestGetPrinterHandler)
     .openapi(sqliteTestPrintRoute, sqliteTestPrintHandler)
+    .openapi(sqliteTestGetCurrentFolderRoute, sqliteTestGetCurrentFolderHandler);
+
 // .openapi(sqliteTestGetPrinterAttributesRoute, sqliteTestGetPrinterAttributesHandler) //lbp221では機能しなかった
 
 
